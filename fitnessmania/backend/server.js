@@ -2,15 +2,21 @@ require('dotenv').config();
 
 const http = require('http');
 
+const express = require('express');
+const cors = require('cors');
 
+const app = express();
 
-const server = http.createServer((req, res) => {
-    res.end('Hello World');
+app.use(cors());
+
+app.get('/', (req, res) => {
+    res.send('Hello World - the backend');
 });
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
+// Start the server
+app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
