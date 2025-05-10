@@ -29,9 +29,6 @@ mongoose.connect(process.env.MONGODB_URI)
     console.log(`Server is running on port ${PORT}`);
   });
 
-
-
-
   app.post('/api/users', async (req, res) => {
     try {
       const { username, email } = req.body;
@@ -44,4 +41,15 @@ mongoose.connect(process.env.MONGODB_URI)
       res.status(400).json({ error: error.message });
     }
   });
+
+  // Fetch all users
+  app.get('/api/users', async (req, res) => {
+    try {
+      const users = await User.find();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
   
