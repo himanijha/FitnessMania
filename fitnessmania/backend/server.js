@@ -10,6 +10,19 @@ const http = require('http');
 app.use(express.json());
 app.use(cors());
 
+app.use((req, res, next) => {
+    const username = "admin"; 
+    const password = "password"; // hard coded password
+    if (req.headers.authorization == `Basic ${btoa(username + ":" + password)}`) {
+        return next();
+    } else {
+        res.set('WWW-Authenticate', 'Basic realm="Everything"');
+        res.status(401).send('Authentication required.');
+    }
+
+    // TODO: hash password instead of storing as text
+});
+
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the backend' });
 });
