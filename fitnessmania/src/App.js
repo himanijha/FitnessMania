@@ -1,22 +1,25 @@
 import { useEffect, useState } from 'react';
+import UserForm from './components/UserForm';
 
 function App() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState('');
 
   useEffect(() => {
-    // Fetch data from backend API
-    fetch(`http://localhost:3000/`)
-      .then(response => response.text())   
-      .then(data => setData(data)) 
+    fetch('http://localhost:3000/')
+      .then(response => response.json())
+      .then(data => setData(data.message))
       .catch(error => console.error('Error fetching data:', error));
   }, []);
 
   return (
     <div>
-      This is FitnessMania.
-      <div>{data}</div>
+      <h1>This is FitnessMania.</h1>
+      <p>{data}</p>
+      <UserForm />
     </div>
   );
 }
 
 export default App;
+
+
