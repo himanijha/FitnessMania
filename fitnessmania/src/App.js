@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import UserForm from './components/UserForm';
+import Dashboard from './components/Dashboard';
 
 function App() {
   const [data, setData] = useState('');
@@ -20,7 +21,8 @@ function App() {
 
   return (
     <div>
-      <h1>This is FitnessMania.</h1>
+      <Dashboard/>
+      {/* <h1>This is FitnessMania.</h1>
       <p>{data}</p>
       <UserForm />
       <h2>Users</h2>
@@ -28,7 +30,7 @@ function App() {
         {users.map(user => (
           <li key={user._id}>{user.username} ({user.email})</li>
         ))}
-      </ul>
+      </ul> */}
     </div>
   );
 }
