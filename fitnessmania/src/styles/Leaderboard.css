@@ -1,0 +1,131 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+.leaderboard-container {
+  padding: 30px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.leaderboard-card {
+  width: 100%;
+  max-width: 900px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 25px 30px;
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.leaderboard-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.highlight {
+  color: #3b82f6;
+}
+
+.refresh-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.refresh-button:hover {
+  background-color: #2563eb;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  text-align: left;
+  padding: 12px 14px;
+}
+
+.leaderboard-table th {
+  background-color: #f0f2f5;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.leaderboard-table tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.user-cell {
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.leaderboard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.reminders {
+  background-color: #f0f4f8;
+  border-radius: 8px;
+  padding: 16px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.reminders h3 {
+  margin-top: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.reminders ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.reminders li {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.share-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  align-self: flex-start;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.share-button:hover {
+  background-color: #2563eb;
+}
