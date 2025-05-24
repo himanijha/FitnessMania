@@ -1,57 +1,60 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import './../_styles/Dashboard.css';
 function Dashboard() {
 
-    const [posts, setPosts] = useState([
-        {
-            username: 'John Doe',
-            title: 'Morning Run',
-            startTime: '6:30 AM',
-            endTime: '7:15 AM',
-            description: 'Ran 5km around the park. Felt energized and ready for the day!',
-            commentstate: false,
-            likeCount: 0,
-            comments: [
-                { username: 'Jane Smith', text: 'Great job! Early bird gets the worm.' },
-                { username: 'Alex Lee', text: 'Impressive pace for a morning run!' }
-            ]
-        },
-        {
-            username: 'John Doe',
-            title: 'Yoga Session',
-            startTime: '8:00 PM',
-            endTime: '8:45 PM',
-            description: 'Relaxing evening yoga to improve flexibility and reduce stress.',
-            commentstate: false,
-            likeCount: 0,
-            comments: [
-                { username: 'Emily Clark', text: 'Yoga is the best way to end the day.' }
-            ]
-        },
-        {
-            username: 'John Doe',
-            title: 'Cycling with Friends',
-            startTime: '4:00 PM',
-            endTime: '5:30 PM',
-            description: 'Cycled 15km with friends along the river trail. Great weather and company!',
-            commentstate: false,
-            likeCount: 0,
-            comments: [
-                { username: 'Mike Brown', text: 'Wish I could have joined!' },
-                { username: 'Sarah Kim', text: 'Sounds like fun!' }
-            ]
-        }
-    ]);
+    const [posts, setPosts] = useState([]);
+    const [filterTags, setFilterTags] = useState(["Yoga"]);
+    const [selectedTag, setSelectedTag] = useState('all');
+
+    const handleFilter = (tag) => {
+        setSelectedTag(tag);
+    };
+
+    const filteredPosts = selectedTag === 'all' 
+        ? posts 
+        : posts.filter(post => post.tags && post.tags.includes(selectedTag));
+
+    const uniqueTags = [...new Set(posts.flatMap(post => post.tags || []))];
+
+    useEffect(() => {
+        console.log("Before trying to get")
+      fetch('http://localhost:3000/api/posts')
+        .then(response => response.json())
+        .then(posts => setPosts(posts))
+        .catch(error => console.error('Error fetching users:', error));
+    console.log("After trying to get", posts)
+    }, []);
+
+    useEffect(() => {
+    console.log("Posts updated:", posts);
+}, [posts]);
 
     const setCommentState = (index) => {
-        setPosts(prevPosts =>
-            prevPosts.map((p, i) =>
-                i === index
-                    ? { ...p, commentstate: !p.commentstate }
-                    : p
-            )
-        );
-    };
+    setPosts((prevPosts) => {
+        const updatedPosts = prevPosts.map((p, i) => {
+            if (i === index) {
+                // Trigger the API call to update the post
+                fetch(`http://localhost:3000/api/posts/${p._id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ commentstate: !p.commentstate }),
+                })
+                .then((response) => response.json())
+                .then((updatedPost) => {
+                    console.log('Post updated --:', updatedPost);
+                })
+                .catch((error) => console.error('Error updating post:', error));
+                
+                // Update the local state
+                return { ...p, commentstate: !p.commentstate };
+            }
+            return p; // Return unchanged post for others
+        });
+        return updatedPosts;
+    });
+};
 
     const setLikeState = (index) => {
         setPosts(prevPosts =>
@@ -67,11 +70,6 @@ function Dashboard() {
         <div className = "container">
             <div className = "side-nav">
                 <div className="nav-header">
-                    <img 
-                        src="https://img.icons8.com/ios-filled/50/000000/dumbbell.png" 
-                        alt="Fitness Mania Logo" 
-                        style={{ width: '32px', height: '32px', verticalAlign: 'middle', marginRight: '0.5rem' }}
-                    />
                     Fitness Mania
                 </div>
                 <button className = "nav-button">Profile</button>
@@ -109,7 +107,7 @@ function Dashboard() {
                                     style={{
                                         width: '60%', // Example: 60% progress
                                         height: '100%',
-                                        background: '#000',
+                                        background: '#3C82F6',
                                         borderRadius: '8px 0 0 8px',
                                         transition: 'width 0.4s',
                                     }}
@@ -133,7 +131,7 @@ function Dashboard() {
                                     style={{
                                         width: '60%', // Example: 60% progress
                                         height: '100%',
-                                        background: '#000',
+                                        background: '#3C82F6',
                                         borderRadius: '8px 0 0 8px',
                                         transition: 'width 0.4s',
                                     }}
@@ -151,7 +149,19 @@ function Dashboard() {
                 </div>
             </div>
             <div className = "feed-container">
-
+                const filterTags = ['all', 'workouts', 'nutrition', 'progress'];
+                
+                <div className="filter-tags">
+                    {filterTags.map((tag) => (
+                        <button
+                            key={tag}
+                            className={`filter-tag ${tag === 'all' ? 'active' : ''}`}
+                            onClick={() => handleFilter(tag)}
+                        >
+                            {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                        </button>
+                    ))}
+                </div>
                 <div className = "feed-box">
                     {posts.map((post, index) => (
                         <div key = {index} className = "post-container"> 
