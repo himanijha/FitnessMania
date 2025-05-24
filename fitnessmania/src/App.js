@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import UserForm from './components/UserForm';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
 import Leaderboard from './components/Leaderboard';
 import NavBar from './components/NavBar';
 
@@ -22,9 +24,8 @@ function App() {
 
   return (
     <div>
-      <NavBar></NavBar>
-      <Leaderboard></Leaderboard>
-      <h1>This is FitnessMania.</h1>
+      <Dashboard/>
+      {/* <h1>This is FitnessMania.</h1>
       <p>{data}</p>
       <UserForm />
       <h2>Users</h2>
@@ -32,7 +33,7 @@ function App() {
         {users.map(user => (
           <li key={user._id}>{user.username} ({user.email})</li>
         ))}
-      </ul>
+      </ul> */}
     </div>
   );
 }
