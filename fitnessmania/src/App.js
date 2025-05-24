@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import UserForm from './components/UserForm';
+import Leaderboard from './components/Leaderboard';
+import NavBar from './components/NavBar';
 
 function App() {
   const [data, setData] = useState('');
@@ -20,6 +22,8 @@ function App() {
 
   return (
     <div>
+      <NavBar></NavBar>
+      <Leaderboard></Leaderboard>
       <h1>This is FitnessMania.</h1>
       <p>{data}</p>
       <UserForm />
