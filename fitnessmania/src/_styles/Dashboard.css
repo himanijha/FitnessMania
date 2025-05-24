@@ -1,0 +1,196 @@
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+}
+
+.side-nav {
+    border-right: 1px solid #e0e0e0;
+    height: 100vh;
+    min-height: 100vh;
+}
+
+.nav-header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 1.5rem 0 1rem 0;
+    text-align: center;
+    letter-spacing: 1px;
+    color: #333;
+}
+.nav-button {
+    display: block;
+    padding: 1rem 0;
+    margin: 0;
+    background: none;
+    border: none;
+    width: 80%;
+    color: #333;
+    text-align: left;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    padding-left: 3rem;
+    margin-left: 2rem;
+    margin-right: 6rem;
+}
+
+.nav-button:hover, .nav-button:focus {
+    background-color: #eaeaea;
+    color: #000101;
+}
+
+.main-container{
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+}
+
+.my-profile-container {
+    background-color: #fff;
+    margin: 1rem;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    border: 1px solid #e0e0e0; /* subtle light grey border */
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    padding: 1rem;
+    padding-top: 0.3rem;
+    margin-bottom: 1rem;
+}
+
+.my-image {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #ccc;
+    margin-right: 1.25rem;
+}
+
+.my-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: black;
+    letter-spacing: 0.5px;
+}
+
+.header-text {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: black;
+    letter-spacing: 0.5px;
+    margin-top: 1.3rem;
+    margin-left: 1rem;
+}
+
+.view-my-profile {
+    display: block;
+    margin: 0.5rem auto 0 auto;
+    padding: 0.6rem 1.5rem;
+    background-color: #fff;
+    color: #333;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.view-my-profile:hover,
+.view-my-profile:focus {
+    background-color: #f5f5f5;
+    color: #111;
+    border-color: #b0b0b0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.my-progress-container {
+    margin: 1rem;
+    background-color: #fff;
+    margin: 1rem;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    border: 1px solid #e0e0e0; /* subtle light grey border */
+}
+
+.info-container {
+    padding-right: 1rem;
+    padding-left: 1rem;
+    margin-top: 1rem;
+}
+
+.progress-bar-header {
+    display:flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.daily-challenge-container {
+    margin: 1rem;
+    background-color: #fff;
+    margin: 1rem;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    border: 1px solid #e0e0e0; /* subtle light grey border */
+    margin-right: 2rem;
+}
+
+.daily-challenge {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #b0b0b0; /* subtle grey border */
+    margin: 2rem;
+    padding: 1rem;
+    border-radius: 10px;
+}
+
+.feed-box {
+    border-right: 1px solid #e0e0e0;
+    border-radius: 12px;
+}
+
+.post-container {
+    margin: 1rem;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    padding: 1rem;
+
+}
+
+.username {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 0.5rem;
+}
+
+.time {
+    display:flex;
+}
+
+.react-button {
+    background-color: white;
+    border: none;
+    font-size: large;
+}
+
+.comment-container {
+    margin: 1rem;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+}
+
+.comment-box {
+    margin: 0.5rem;
+    display: flex;
+
+}
+
+.comment-username {
+    margin-right: 0.5rem;
+    font-weight: bold;
+}
