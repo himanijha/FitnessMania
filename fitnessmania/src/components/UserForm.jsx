@@ -16,10 +16,29 @@ function UserForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" />
-      <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" />
-      <button type="submit">Create User</button>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <input
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          placeholder="Username"
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div>
+        <input
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="Email"
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <button
+        type="submit"
+        className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+      >
+        Create User
+      </button>
     </form>
   );
 }

@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const User = require('./models/User');
+const Post = require('./models/Post');
 
 const app = express();
 const http = require('http');
@@ -60,6 +61,29 @@ mongoose.connect(process.env.MONGODB_URI)
     try {
       const users = await User.find();
       res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create a new post
+  app.post('/api/posts', async (req, res) => {
+    try {
+      const { userId, title, content } = req.body;
+      const newPost = new Post({ userId, title, content });
+      const savedPost = await newPost.save();
+      res.status(201).json(savedPost);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Get posts by user ID
+  app.get('/api/users/:userId/posts', async (req, res) => {
+    try {
+      const posts = await Post.find({ userId: req.params.userId })
+        .sort({ createdAt: -1 }); // Sort by newest first
+      res.json(posts);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
