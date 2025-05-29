@@ -1,38 +1,32 @@
 import { useEffect, useState } from 'react';
-import UserForm from './components/UserForm';
-import Dashboard from './components/Dashboard';
+import Dashboard from './pages/Dashboard';
+import UserProfile from './pages/UserProfile';
+import LandingPage from './pages/LandingPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
-  const [data, setData] = useState('');
-  const [users, setUsers] = useState([]);
-
-  // useEffect(() => {
-  //   fetch('http://localhost:3000/')
-  //     .then(response => response.json())
-  //     .then(data => setData(data.message))
-  //     .catch(error => console.error('Error fetching data:', error));
-
-  //   fetch('http://localhost:3000/api/users')
-  //     .then(response => response.json())
-  //     .then(users => setUsers(users))
-  //     .catch(error => console.error('Error fetching users:', error));
-
-  //   console.log("Inside useEffecT:" + users)
-  // }, []);
+  
 
   return (
-    <div>
-      <Dashboard/>
-      {/* <h1>This is FitnessMania.</h1> */}
-      {/* <p>{data}</p>
-      <UserForm />
-      <h2>Users</h2>
-      <ul>
-        {users.map(user => (
-          <li key={user._id}>{user.username} ({user.email})</li>
-        ))}
-      </ul> */}
-    </div>
+    <Router>
+      <nav className="bg-gray-800 p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex space-x-6">
+            <Link to="/" className="text-white hover:text-gray-300 transition duration-300">Landing</Link>
+            <Link to="/dashboard" className="text-white hover:text-gray-300 transition duration-300">Dashboard</Link>
+            <Link to="/user-profile" className="text-white hover:text-gray-300 transition duration-300">UserProfile</Link>
+            <Link to="/leaderboard" className="text-white hover:text-gray-300 transition duration-300">Leaderboard</Link>
+          </div>
+        </div>
+      </nav>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/user-profile" element={<UserProfile />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+      </Routes>
+    </Router>
   );
 }
 
