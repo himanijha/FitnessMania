@@ -11,7 +11,7 @@ const postsSchema = new mongoose.Schema({
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
     description: { type: String, required: true },
-    commentstate: { type: Boolean, default: false },
+    // commentstate: { type: Boolean, default: false },
     likeCount: { type: Number, default: 0 },
     comments: [commentSchema]
 });

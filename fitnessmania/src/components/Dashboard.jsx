@@ -3,18 +3,7 @@ import './../_styles/Dashboard.css';
 function Dashboard() {
 
     const [posts, setPosts] = useState([]);
-    const [filterTags, setFilterTags] = useState(["Yoga"]);
-    const [selectedTag, setSelectedTag] = useState('all');
-
-    const handleFilter = (tag) => {
-        setSelectedTag(tag);
-    };
-
-    const filteredPosts = selectedTag === 'all' 
-        ? posts 
-        : posts.filter(post => post.tags && post.tags.includes(selectedTag));
-
-    const uniqueTags = [...new Set(posts.flatMap(post => post.tags || []))];
+    const [newComment, setNewComment] = useState();
 
     useEffect(() => {
         console.log("Before trying to get")
@@ -33,20 +22,6 @@ function Dashboard() {
     setPosts((prevPosts) => {
         const updatedPosts = prevPosts.map((p, i) => {
             if (i === index) {
-                // Trigger the API call to update the post
-                fetch(`http://localhost:3000/api/posts/${p._id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ commentstate: !p.commentstate }),
-                })
-                .then((response) => response.json())
-                .then((updatedPost) => {
-                    console.log('Post updated --:', updatedPost);
-                })
-                .catch((error) => console.error('Error updating post:', error));
-                
                 // Update the local state
                 return { ...p, commentstate: !p.commentstate };
             }
@@ -57,27 +32,84 @@ function Dashboard() {
 };
 
     const setLikeState = (index) => {
-        setPosts(prevPosts =>
-            prevPosts.map((p, i) =>
-                i === index
-                    ? { ...p, likeCount: p.likeCount + 1 }
-                    : p
-            )
-        );
+    setPosts((prevPosts) => {
+        const updatedPosts = prevPosts.map((p, i) => {
+            if (i === index) {
+                // Trigger the API call to update the post
+                fetch(`http://localhost:3000/api/posts/${p._id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ likeCount: p.likeCount +1 }),
+                })
+                .then((response) => response.json())
+                .then((updatedPost) => {
+                    console.log('Post updated --:', updatedPost);
+                })
+                .catch((error) => console.error('Error updating post:', error));
+                
+                // Update the local state
+                return { ...p, likeCount: p.likeCount + 1 };
+            }
+            return p; // Return unchanged post for others
+        });
+        return updatedPosts;
+    });
+};
+
+const handleCommentChange = (e) => {
+    setNewComment(e.target.value);
+};
+
+const handleCommentSubmit = async (e, postIndex) => {
+  e.preventDefault(); // Prevent the default form submission behavior
+
+  if (newComment.trim() === '') return; // Prevent empty comments
+
+  const updatedComment = { username: "username", text: newComment };
+
+  // Update state optimistically
+  setPosts((prevPosts) =>
+    prevPosts.map((post, index) =>
+      index === postIndex
+        ? {
+            ...post,
+            comments: [...post.comments, updatedComment], // Append new comment locally
+          }
+        : post
+    )
+  );
+
+  setNewComment(''); // Clear the input field
+
+  // Perform the API call
+  try {
+    const postId = posts[postIndex]._id; // Assuming `_id` exists in your posts array
+    const response = await fetch(`http://localhost:3000/api/posts/${postId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        comments: [...posts[postIndex].comments, updatedComment], // Append new comment for backend
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update the post');
     }
 
+    const updatedPost = await response.json();
+    console.log('Post updated:', updatedPost);
+  } catch (error) {
+    console.error('Error updating post:', error);
+    // Optionally: Handle error (e.g., rollback optimistic update or notify the user)
+  }
+};
+
     return (
-        <div className = "container">
-            <div className = "side-nav">
-                <div className="nav-header">
-                    Fitness Mania
-                </div>
-                <button className = "nav-button">Profile</button>
-                <button className = "nav-button"> Feed</button>
-                <button className = "nav-button">My Activity</button>
-                <button className = "nav-button">Challenges</button>
-            </div>
-            <div className = "side-content">
+        <div>
             <div className = "main-container">
                 <div className = "my-profile-container">
                     <div className = "header-container">
@@ -149,19 +181,7 @@ function Dashboard() {
                 </div>
             </div>
             <div className = "feed-container">
-                const filterTags = ['all', 'workouts', 'nutrition', 'progress'];
-                
-                <div className="filter-tags">
-                    {filterTags.map((tag) => (
-                        <button
-                            key={tag}
-                            className={`filter-tag ${tag === 'all' ? 'active' : ''}`}
-                            onClick={() => handleFilter(tag)}
-                        >
-                            {tag.charAt(0).toUpperCase() + tag.slice(1)}
-                        </button>
-                    ))}
-                </div>
+    
                 <div className = "feed-box">
                     {posts.map((post, index) => (
                         <div key = {index} className = "post-container"> 
@@ -196,11 +216,25 @@ function Dashboard() {
                                         <div className = "comment-text"> {comment.text} </div>
                                     </div>
                                 ))}
+                                <form  onSubmit={(e) => handleCommentSubmit(e, index)} className="mb-4"> 
+                                    <textarea
+                                        value={newComment}
+                                        onChange={handleCommentChange}
+                                        placeholder="Write a comment..."
+                                        className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        rows="3"
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                                        >
+                                        Submit
+                                    </button>
+                                </form>
                             </div>)}
                         </div>
                     ))}
                 </div>
-            </div>
             </div>
 
         
