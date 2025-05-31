@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const User = require('./models/User');
 const Post = require('./models/Post');
+const bcrypt = require('bcrypt');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -32,18 +33,25 @@ const upload = multer({ storage: storage });
 app.use(express.json());
 app.use(cors());
 
-// app.use((req, res, next) => {
-//     const username = "admin"; 
-//     const password = "password"; // hard coded password
-//     if (req.headers.authorization == `Basic ${btoa(username + ":" + password)}`) {
-//         return next();
-//     } else {
-//         res.set('WWW-Authenticate', 'Basic realm="Everything"');
-//         res.status(401).send('Authentication required.');
-//     }
+// Authentication middleware - skip for signup and signin endpoints
+const authenticate = (req, res, next) => {
+    // Skip authentication for signup and signin routes
+    if (req.path === '/api/signup' || req.path === '/api/signin') {
+        return next();
+    }
 
-//     // TODO: hash password instead of storing as text
-// });
+    const username = "admin"; 
+    const password = "password"; // hard coded password
+    if (req.headers.authorization == `Basic ${btoa(username + ":" + password)}`) {
+        return next();
+    } else {
+        res.set('WWW-Authenticate', 'Basic realm="Everything"');
+        res.status(401).send('Authentication required.');
+    }
+};
+
+// Apply authentication middleware
+app.use(authenticate);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the backend' });
@@ -247,5 +255,83 @@ app.get('/api/users/:userId/posts', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-  
-  
+
+  // Signup endpoint
+  app.post('/api/signup', async (req, res) => {
+    try {
+      const { first_name, last_name, username, email, password } = req.body;
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ 
+        $or: [{ email }, { username }]
+      });
+      if (existingUser) {
+        return res.status(400).json({ 
+          message: existingUser.email === email ? 'User already exists with this email' : 'Username already taken'
+        });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Create new user
+      const user = new User({
+        first_name,
+        last_name,
+        username,
+        email,
+        password: hashedPassword,
+      });
+
+      // Save the user and store the result
+      const savedUser = await user.save();
+
+      res.status(201).json({ 
+        message: 'User created successfully',
+        userId: savedUser._id.toString(),
+        user: {
+          _id: savedUser._id.toString(),
+          username: savedUser.username
+        }
+      });
+    } catch (error) {
+      console.error('Signup error:', error);
+      res.status(500).json({ message: 'Error creating user: ' + error.message });
+    }
+  });
+
+  // Update user fitness information
+  app.post('/api/update-fitness-info', async (req, res) => {
+    try {
+      const { userId, height, weight, age, gender, fitness_goal } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Update user with fitness information
+      user.height = height;
+      user.weight = weight;
+      user.age = age;
+      user.gender = gender;
+      user.fitness_goal = fitness_goal;
+
+      await user.save();
+
+      res.json({ 
+        message: 'Fitness information updated successfully',
+        user: {
+          id: user._id,
+          username: user.username,
+          fitness_goal: user.fitness_goal
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error updating fitness information: ' + error.message });
+    }
+  });

@@ -8,5 +8,5 @@ Steps to run the project:
 You might need to install dotenv, express, and cors 
 
 3. cd .. back to the main directory and on a different instance of bash run
-## run npm start
+## npm start
 Say yes to running on a different port
