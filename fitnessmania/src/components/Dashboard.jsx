@@ -4,6 +4,11 @@ function Dashboard() {
 
     const [posts, setPosts] = useState([]);
     const [newComment, setNewComment] = useState();
+    const [userData, setUserData] = useState(null);
+    const [openNewPost, setOpenNewPost] = useState(false);
+    const [newPost, setNewPost] = useState({ title: '', content: '', startTime: '', endTime: '' });
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
 
     useEffect(() => {
         console.log("Before trying to get")
@@ -12,6 +17,17 @@ function Dashboard() {
         .then(posts => setPosts(posts))
         .catch(error => console.error('Error fetching users:', error));
     console.log("After trying to get", posts)
+
+     // Fetch user data
+     fetch('http://localhost:3000/api/users/profile')
+     .then(response => response.json())
+     .then(data => {
+       setUserData(data);
+     })
+     .catch(error => {
+       console.error('Error fetching user data:', error);
+     });
+
     }, []);
 
     useEffect(() => {
@@ -108,6 +124,49 @@ const handleCommentSubmit = async (e, postIndex) => {
   }
 };
 
+const handleImageChange = (e) => {
+  const file = e.target.files[0];
+  setImageFile(file);
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
+  } else {
+    setImagePreview(null);
+  }
+};
+
+const handleCreatePost = async () => {
+  if (!userData) {
+    console.error('User data not loaded yet.');
+    return; // Prevent creating post if user data is not available
+  }
+  try {
+    const formData = new FormData();
+    formData.append('username', userData.username); // Use fetched username
+    formData.append('title', newPost.title);
+    formData.append('description', newPost.content);
+    formData.append('startTime', newPost.startTime || '');
+    formData.append('endTime', newPost.endTime || '');
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    const response = await fetch('http://localhost:3000/api/posts', {
+      method: 'POST',
+      body: formData,
+    });
+    const savedPost = await response.json();
+    // Add the newly created post to the existing posts list
+    setPosts([savedPost, ...posts]);
+    setOpenNewPost(false);
+    setNewPost({ title: '', content: '', startTime: '', endTime: '' });
+    setImageFile(null);
+    setImagePreview(null);
+  } catch (error) {
+    console.error('Error creating post:', error);
+  }
+};
+
     return (
         <div>
             <div className = "main-container">
@@ -117,6 +176,12 @@ const handleCommentSubmit = async (e, postIndex) => {
                         <div className = "my-name">John Doe</div>
                     </div>
                     <button className = "view-my-profile">View Profile</button>
+                    <button 
+                      onClick={() => setOpenNewPost(true)}
+                      className="view-my-profile mt-2"
+                    >
+                      Create New Post
+                    </button>
                 </div>
                 <div className = "my-progress-container">
                     <div className="progress-info">
@@ -236,6 +301,65 @@ const handleCommentSubmit = async (e, postIndex) => {
                     ))}
                 </div>
             </div>
+
+            {/* New Post Modal */}
+            {openNewPost && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+                  <h2 className="text-2xl font-bold mb-4">Create New Post</h2>
+                  <input
+                    type="text"
+                    placeholder="Title"
+                    className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newPost.title}
+                    onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                  />
+                  <textarea
+                    placeholder="Description"
+                    className="w-full border rounded-lg p-2 mb-4 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newPost.content}
+                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Start Time (e.g., 9:00 AM)"
+                    className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newPost.startTime}
+                    onChange={(e) => setNewPost({ ...newPost, startTime: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    placeholder="End Time (e.g., 10:00 AM)"
+                    className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newPost.endTime}
+                    onChange={(e) => setNewPost({ ...newPost, endTime: e.target.value })}
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="mb-4"
+                    onChange={handleImageChange}
+                  />
+                  {imagePreview && (
+                    <img src={imagePreview} alt="Preview" className="mb-4 max-h-40 rounded-lg mx-auto" />
+                  )}
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => { setOpenNewPost(false); setImageFile(null); setImagePreview(null); }}
+                      className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleCreatePost}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Post
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
         
         </div>

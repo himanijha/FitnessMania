@@ -18,7 +18,7 @@ function LeaderboardRow({ rank, user }) {
   return (
     <tr>
       <td>{rank}</td>
-      <td className="user-cell">{user.name}</td>
+      <td className="user-cell">{user.username}</td>
       <td>{user.score}</td>
       <td>{user.time}</td>
     </tr>
