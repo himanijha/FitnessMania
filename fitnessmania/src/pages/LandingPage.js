@@ -26,7 +26,7 @@ function LandingPage() {
               Sign In
             </button>
           </Link>
-          <Link to="/dashboard">
+          <Link to="/signup">
             <button className="w-28 py-2 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
               Sign Up
             </button>

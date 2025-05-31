@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const User = require('./models/User');
 const Post = require('./models/Post');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const http = require('http');
@@ -11,7 +12,13 @@ const http = require('http');
 app.use(express.json());
 app.use(cors());
 
-app.use((req, res, next) => {
+// Authentication middleware - skip for signup and signin endpoints
+const authenticate = (req, res, next) => {
+    // Skip authentication for signup and signin routes
+    if (req.path === '/api/signup' || req.path === '/api/signin') {
+        return next();
+    }
+
     const username = "admin"; 
     const password = "password"; // hard coded password
     if (req.headers.authorization == `Basic ${btoa(username + ":" + password)}`) {
@@ -20,9 +27,10 @@ app.use((req, res, next) => {
         res.set('WWW-Authenticate', 'Basic realm="Everything"');
         res.status(401).send('Authentication required.');
     }
+};
 
-    // TODO: hash password instead of storing as text
-});
+// Apply authentication middleware
+app.use(authenticate);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the backend' });
@@ -88,5 +96,39 @@ mongoose.connect(process.env.MONGODB_URI)
       res.status(500).json({ error: error.message });
     }
   });
-  
-  
+
+  // Signup endpoint
+  app.post('/api/signup', async (req, res) => {
+    try {
+      const { first_name, last_name, username, email, password, age } = req.body;
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ 
+        $or: [{ email }, { username }]
+      });
+      if (existingUser) {
+        return res.status(400).json({ 
+          message: existingUser.email === email ? 'User already exists with this email' : 'Username already taken'
+        });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Create new user
+      const user = new User({
+        first_name,
+        last_name,
+        username,
+        email,
+        password: hashedPassword,
+      });
+
+      await user.save();
+
+      res.status(201).json({ message: 'User created successfully' });
+    } catch (error) {
+      console.error('Signup error:', error);
+      res.status(500).json({ message: 'Error creating user: ' + error.message });
+    }
+  });
