@@ -4,6 +4,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const User = require('./models/User');
 const Post = require('./models/Post');
+const multer = require('multer');
+const path = require('path');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 const http = require('http');
@@ -11,18 +15,21 @@ const http = require('http');
 app.use(express.json());
 app.use(cors());
 
-app.use((req, res, next) => {
-    const username = "admin"; 
-    const password = "password"; // hard coded password
-    if (req.headers.authorization == `Basic ${btoa(username + ":" + password)}`) {
-        return next();
-    } else {
-        res.set('WWW-Authenticate', 'Basic realm="Everything"');
-        res.status(401).send('Authentication required.');
-    }
-
-    // TODO: hash password instead of storing as text
+// Set up multer for file uploads
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'fitnessmania-posts',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+  },
+});
+const upload = multer({ storage: storage });
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the backend' });
@@ -66,11 +73,15 @@ mongoose.connect(process.env.MONGODB_URI)
     }
   });
 
-  // Create a new post
-  app.post('/api/posts', async (req, res) => {
+  // Update the /api/posts endpoint to handle image upload to Cloudinary
+  app.post('/api/posts', upload.single('image'), async (req, res) => {
     try {
       const { userId, title, content } = req.body;
-      const newPost = new Post({ userId, title, content });
+      let imageUrl = '';
+      if (req.file && req.file.path) {
+        imageUrl = req.file.path;
+      }
+      const newPost = new Post({ userId, title, content, imageUrl });
       const savedPost = await newPost.save();
       res.status(201).json(savedPost);
     } catch (error) {
