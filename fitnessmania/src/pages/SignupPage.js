@@ -24,6 +24,7 @@ function SignupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      
       const response = await fetch('http://localhost:3000/api/signup', {
         method: 'POST',
         headers: {
@@ -33,10 +34,20 @@ function SignupPage() {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        navigate('/dashboard');
+        // Check both data.userId and data._id for compatibility
+        const userId = data.userId || (data.user && data.user._id);
+        
+        if (userId) {
+          localStorage.setItem('userId', userId);
+          navigate('/fitness-info');
+        } else {
+          console.error('No userId in response:', data);
+          setError('User ID not received from server');
+        }
       } else {
-        const data = await response.json();
         setError(data.message || 'Something went wrong!');
       }
     } catch (err) {

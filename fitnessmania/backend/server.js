@@ -100,7 +100,7 @@ mongoose.connect(process.env.MONGODB_URI)
   // Signup endpoint
   app.post('/api/signup', async (req, res) => {
     try {
-      const { first_name, last_name, username, email, password, age } = req.body;
+      const { first_name, last_name, username, email, password } = req.body;
 
       // Check if user already exists
       const existingUser = await User.findOne({ 
@@ -124,11 +124,55 @@ mongoose.connect(process.env.MONGODB_URI)
         password: hashedPassword,
       });
 
-      await user.save();
+      // Save the user and store the result
+      const savedUser = await user.save();
 
-      res.status(201).json({ message: 'User created successfully' });
+      res.status(201).json({ 
+        message: 'User created successfully',
+        userId: savedUser._id.toString(),
+        user: {
+          _id: savedUser._id.toString(),
+          username: savedUser.username
+        }
+      });
     } catch (error) {
       console.error('Signup error:', error);
       res.status(500).json({ message: 'Error creating user: ' + error.message });
+    }
+  });
+
+  // Update user fitness information
+  app.post('/api/update-fitness-info', async (req, res) => {
+    try {
+      const { userId, height, weight, age, gender, fitness_goal } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Update user with fitness information
+      user.height = height;
+      user.weight = weight;
+      user.age = age;
+      user.gender = gender;
+      user.fitness_goal = fitness_goal;
+
+      await user.save();
+
+      res.json({ 
+        message: 'Fitness information updated successfully',
+        user: {
+          id: user._id,
+          username: user.username,
+          fitness_goal: user.fitness_goal
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error updating fitness information: ' + error.message });
     }
   });

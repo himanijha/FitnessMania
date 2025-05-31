@@ -4,6 +4,7 @@ import UserProfile from './pages/UserProfile';
 import LandingPage from './pages/LandingPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import SignupPage from './pages/SignupPage';
+import FitnessInfoPage from './pages/FitnessInfoPage';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
         <Route path="/user-profile" element={<UserProfile />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/fitness-info" element={<FitnessInfoPage />} />
       </Routes>
     </Router>
   );
