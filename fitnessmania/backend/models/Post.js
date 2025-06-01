@@ -15,7 +15,8 @@ const postsSchema = new mongoose.Schema({
     likeCount: { type: Number, default: 0 },
     comments: [commentSchema],
     imageUrl: { type: String },
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    tags: {type: String},
 });
 
 module.exports = mongoose.model('Post', postsSchema);

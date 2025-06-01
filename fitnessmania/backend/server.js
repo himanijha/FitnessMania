@@ -51,7 +51,7 @@ const authenticate = (req, res, next) => {
 };
 
 // Apply authentication middleware
-app.use(authenticate);
+//app.use(authenticate);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the backend' });
@@ -108,16 +108,10 @@ mongoose.connect(process.env.MONGODB_URI)
   });
 
 // Filter by tag
-  app.get('/api/posts', async (req, res) => {
+  app.get('/api/posts/:tag', async (req, res) => {
     try {
-      const { tag } = req.query;
-      let query = {};
-      
-      if (tag && tag !== 'all') {
-        query = { tags: tag };
-      }
-      
-      const posts = await Post.find(query);
+      const { tag } = req.params;
+      const posts = await Post.find({ tag: tag });
       console.log(`Posts found for tag ${tag}:`, posts.length);
       res.json(posts);
     } catch (error) {
