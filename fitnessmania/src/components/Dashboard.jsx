@@ -9,7 +9,7 @@ function Dashboard() {
     const [newPost, setNewPost] = useState({ title: '', content: '', startTime: '', endTime: '' });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-
+    
     useEffect(() => {
         console.log("Before trying to get")
       fetch('http://localhost:3000/api/posts')
