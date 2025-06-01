@@ -11,22 +11,30 @@ function Dashboard() {
     const [imagePreview, setImagePreview] = useState(null);
     
     useEffect(() => {
-        console.log("Before trying to get")
-      fetch('http://localhost:3000/api/posts')
-        .then(response => response.json())
-        .then(posts => setPosts(posts))
-        .catch(error => console.error('Error fetching users:', error));
-    console.log("After trying to get", posts)
+        // Fetch posts with Authorization header
+        fetch('http://localhost:3000/api/posts', {
+          headers: {
+            'Authorization': 'Basic ' + btoa('admin:password')
+          }
+        })
+          .then(response => response.json())
+          .then(posts => setPosts(posts))
+          .catch(error => console.error('Error fetching posts:', error));
 
-     // Fetch user data
-     fetch('http://localhost:3000/api/users/profile')
-     .then(response => response.json())
-     .then(data => {
-       setUserData(data);
-     })
-     .catch(error => {
-       console.error('Error fetching user data:', error);
-     });
+        // Fetch user data with Authorization header and userId
+        const userId = localStorage.getItem('userId');
+        fetch(`http://localhost:3000/api/users/profile?userId=${userId}`, {
+          headers: {
+            'Authorization': 'Basic ' + btoa('admin:password')
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          setUserData(data);
+        })
+        .catch(error => {
+          console.error('Error fetching user data:', error);
+        });
 
     }, []);
 
@@ -56,6 +64,7 @@ function Dashboard() {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa('admin:password')
                     },
                     body: JSON.stringify({ likeCount: p.likeCount +1 }),
                 })
@@ -83,7 +92,7 @@ const handleCommentSubmit = async (e, postIndex) => {
 
   if (newComment.trim() === '') return; // Prevent empty comments
 
-  const updatedComment = { username: "username", text: newComment };
+  const updatedComment = { username: userData?.username || "username", text: newComment };
 
   // Update state optimistically
   setPosts((prevPosts) =>
@@ -106,6 +115,7 @@ const handleCommentSubmit = async (e, postIndex) => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + btoa('admin:password')
       },
       body: JSON.stringify({
         comments: [...posts[postIndex].comments, updatedComment], // Append new comment for backend
@@ -153,6 +163,9 @@ const handleCreatePost = async () => {
     }
     const response = await fetch('http://localhost:3000/api/posts', {
       method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa('admin:password')
+      },
       body: formData,
     });
     const savedPost = await response.json();
@@ -168,23 +181,14 @@ const handleCreatePost = async () => {
 };
 
     const handleTagSelect = (tag) => {
-      console.log("Before trying to get")
-      fetch(`http://localhost:3000/api/posts/${tag}`)
+      fetch(`http://localhost:3000/api/posts/${tag}`, {
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        }
+      })
         .then(response => response.json())
         .then(posts => setPosts(posts))
-        .catch(error => console.error('Error fetching users:', error));
-      console.log("After trying to get", posts)
-
-     // Fetch user data
-      // fetch('http://localhost:3000/api/users/profile')
-      // .then(response => response.json())
-      // .then(data => {
-      //   setUserData(data);
-      // })
-      // .catch(error => {
-      //   console.error('Error fetching user data:', error);
-      // });
-
+        .catch(error => console.error('Error fetching posts:', error));
     };
 
 
@@ -194,7 +198,7 @@ const handleCreatePost = async () => {
                 <div className = "my-profile-container">
                     <div className = "header-container">
                         <div className = "my-image"></div>
-                        <div className = "my-name">John Doe</div>
+                        <div className = "my-name">{userData ? userData.username : 'John Doe'}</div>
                     </div>
                     <button className = "view-my-profile">View Profile</button>
                     <button 
