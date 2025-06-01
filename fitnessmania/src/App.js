@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import SignupPage from './pages/SignupPage';
 import FitnessInfoPage from './pages/FitnessInfoPage';
+import LoginPage from './pages/LoginPage';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
             <Link to="/dashboard" className="text-white hover:text-gray-300 transition duration-300">Dashboard</Link>
             <Link to="/user-profile" className="text-white hover:text-gray-300 transition duration-300">UserProfile</Link>
             <Link to="/leaderboard" className="text-white hover:text-gray-300 transition duration-300">Leaderboard</Link>
+            <Link to="/login" className="text-white hover:text-gray-300 transition duration-300">Login</Link>
           </div>
         </div>
       </nav>
@@ -29,6 +31,7 @@ function App() {
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/fitness-info" element={<FitnessInfoPage />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </Router>
   );

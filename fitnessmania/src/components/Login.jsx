@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './Login.css';
+import '../styles/Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -54,7 +54,7 @@ const Login = () => {
           </button>
 
           <div className="signup-link">
-            Don't have an account? <a href="#">Sign up</a>
+            Don't have an account? <a href="/signup">Sign up</a>
           </div>
         </form>
       </div>
