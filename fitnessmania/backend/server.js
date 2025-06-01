@@ -51,7 +51,7 @@ const authenticate = (req, res, next) => {
 };
 
 // Apply authentication middleware
-//app.use(authenticate);
+app.use(authenticate);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the backend' });
