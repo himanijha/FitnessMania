@@ -1,9 +1,11 @@
 import {useState, useEffect} from 'react';
 import './../styles/Dashboard.css';
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from 'react-router-dom';
 
 function Dashboard() {
     const { userId, loading } = useAuth();
+    const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
     const [newComment, setNewComment] = useState();
     const [userData, setUserData] = useState(null);
@@ -203,7 +205,12 @@ const handleCreatePost = async () => {
                         <div className = "my-image"></div>
                         <div className = "my-name">{userData ? userData.first_name + " " + userData.last_name: ""}</div>
                     </div>
-                    <button className = "view-my-profile">View Profile</button>
+                    <button 
+                        className = "view-my-profile"
+                        onClick={() => navigate('/user-profile')}
+                    >
+                        View Profile
+                    </button>
                     <button 
                       onClick={() => setOpenNewPost(true)}
                       className="view-my-profile mt-2"
