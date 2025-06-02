@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from 'react-router-dom';
 
 function UserProfile() {
-  const { userId, loading: authLoading } = useAuth();
+  const { userId, loading: authLoading, logout } = useAuth();
+  const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
@@ -352,6 +354,11 @@ function UserProfile() {
               >
                 Edit Profile
               </button>
+              <button onClick = {() => {
+                logout();
+                navigate('/')
+                
+              }}>Logout</button>
             </div>
           </div>
         </div>
