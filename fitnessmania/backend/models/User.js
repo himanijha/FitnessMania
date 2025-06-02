@@ -50,6 +50,10 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  dailychallenge_score: {
+    type: Number,
+    default: 0
   }
 });
 
