@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../contexts/AuthContext";
 import '../styles/Login.css';
 
 const Login = () => {
@@ -8,6 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +30,8 @@ const Login = () => {
 
       if (response.ok) {
         // Store user ID in localStorage
-        localStorage.setItem('userId', data.userId);
+        login(data.userId);
+        // localStorage.setItem('userId', data.userId);
         // Navigate to dashboard
         navigate('/dashboard');
       } else {

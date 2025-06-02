@@ -1,7 +1,9 @@
 import {useState, useEffect} from 'react';
-import './../_styles/Dashboard.css';
-function Dashboard() {
+import './../styles/Dashboard.css';
+import { useAuth } from "../contexts/AuthContext";
 
+function Dashboard() {
+    const { userId, loading } = useAuth();
     const [posts, setPosts] = useState([]);
     const [newComment, setNewComment] = useState();
     const [userData, setUserData] = useState(null);
@@ -9,6 +11,7 @@ function Dashboard() {
     const [newPost, setNewPost] = useState({ title: '', content: '', startTime: '', endTime: '' });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
+    
     
     useEffect(() => {
         // Fetch posts with Authorization header
@@ -22,7 +25,7 @@ function Dashboard() {
           .catch(error => console.error('Error fetching posts:', error));
 
         // Fetch user data with Authorization header and userId
-        const userId = localStorage.getItem('userId');
+        console.log("USER ID: ", userId, " ", "LOADING: ", loading);
         fetch(`http://localhost:3000/api/users/profile?userId=${userId}`, {
           headers: {
             'Authorization': 'Basic ' + btoa('admin:password')
@@ -31,12 +34,13 @@ function Dashboard() {
         .then(response => response.json())
         .then(data => {
           setUserData(data);
+          console.log("USER DATA: ", data);
         })
         .catch(error => {
           console.error('Error fetching user data:', error);
         });
 
-    }, []);
+    }, [userId, loading]);
 
     useEffect(() => {
     console.log("Posts updated:", posts);
@@ -55,32 +59,27 @@ function Dashboard() {
     });
 };
 
-    const setLikeState = (index) => {
-    setPosts((prevPosts) => {
-        const updatedPosts = prevPosts.map((p, i) => {
-            if (i === index) {
-                // Trigger the API call to update the post
-                fetch(`http://localhost:3000/api/posts/${p._id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + btoa('admin:password')
-                    },
-                    body: JSON.stringify({ likeCount: p.likeCount +1 }),
-                })
-                .then((response) => response.json())
-                .then((updatedPost) => {
-                    console.log('Post updated --:', updatedPost);
-                })
-                .catch((error) => console.error('Error updating post:', error));
-                
-                // Update the local state
-                return { ...p, likeCount: p.likeCount + 1 };
-            }
-            return p; // Return unchanged post for others
-        });
-        return updatedPosts;
-    });
+  const setLikeState = (index) => {
+    const post = posts[index]; // get logged-in userId from your context or props
+
+  fetch(`http://localhost:3000/api/posts/${post._id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Basic ' + btoa('admin:password'),
+    },
+    body: JSON.stringify({ userId }),
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error('Failed to toggle like');
+      return res.json();
+    })
+    .then((updatedPost) => {
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => (p._id === updatedPost._id ? updatedPost : p))
+      );
+    })
+    .catch((error) => console.error('Error updating post:', error));
 };
 
 const handleCommentChange = (e) => {
@@ -92,7 +91,7 @@ const handleCommentSubmit = async (e, postIndex) => {
 
   if (newComment.trim() === '') return; // Prevent empty comments
 
-  const updatedComment = { username: userData?.username || "username", text: newComment };
+  const updatedComment = { username: userData?.username || userData.username, text: newComment };
 
   // Update state optimistically
   setPosts((prevPosts) =>
@@ -191,6 +190,10 @@ const handleCreatePost = async () => {
         .catch(error => console.error('Error fetching posts:', error));
     };
 
+    if (loading) {
+    return <div>Loading...</div>; // or a spinner
+    }
+
 
     return (
         <div>
@@ -198,7 +201,7 @@ const handleCreatePost = async () => {
                 <div className = "my-profile-container">
                     <div className = "header-container">
                         <div className = "my-image"></div>
-                        <div className = "my-name">{userData ? userData.username : 'John Doe'}</div>
+                        <div className = "my-name">{userData ? userData.first_name + " " + userData.last_name: ""}</div>
                     </div>
                     <button className = "view-my-profile">View Profile</button>
                     <button 

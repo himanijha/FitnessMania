@@ -33,25 +33,25 @@ const upload = multer({ storage: storage });
 app.use(express.json());
 app.use(cors());
 
-// Authentication middleware - skip for signup and signin endpoints
-const authenticate = (req, res, next) => {
-    // Skip authentication for signup and signin routes
-    if (req.path === '/api/signup' || req.path === '/api/signin') {
-        return next();
-    }
+// // Authentication middleware - skip for signup and signin endpoints
+// const authenticate = (req, res, next) => {
+//     // Skip authentication for signup and signin routes
+//     if (req.path === '/api/signup' || req.path === '/api/signin') {
+//         return next();
+//     }
 
-    const username = "admin"; 
-    const password = "password"; // hard coded password
-    if (req.headers.authorization == `Basic ${btoa(username + ":" + password)}`) {
-        return next();
-    } else {
-        res.set('WWW-Authenticate', 'Basic realm="Everything"');
-        res.status(401).send('Authentication required.');
-    }
-};
+//     const username = "admin"; 
+//     const password = "password"; // hard coded password
+//     if (req.headers.authorization == `Basic ${btoa(username + ":" + password)}`) {
+//         return next();
+//     } else {
+//         res.set('WWW-Authenticate', 'Basic realm="Everything"');
+//         res.status(401).send('Authentication required.');
+//     }
+// };
 
-// Apply authentication middleware
-app.use(authenticate);
+// // Apply authentication middleware
+// app.use(authenticate);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from the backend' });

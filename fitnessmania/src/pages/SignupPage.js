@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../contexts/AuthContext";
 
 function SignupPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -41,7 +43,8 @@ function SignupPage() {
         const userId = data.userId || (data.user && data.user._id);
         
         if (userId) {
-          localStorage.setItem('userId', userId);
+          login(data.userId);
+          // localStorage.setItem('userId', userId);
           navigate('/fitness-info');
         } else {
           console.error('No userId in response:', data);
