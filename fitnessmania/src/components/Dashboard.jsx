@@ -283,13 +283,18 @@ const handleCreatePost = async () => {
                     </div>
                 </div>
             </div>
-            <div className="feed-container">
+            <div className="feed-container" style={{
+                maxWidth: '600px',
+                margin: '0 auto',
+                padding: '20px'
+            }}>
                 <div className="tag-options" style={{
                     display: 'flex',
                     gap: '1rem',
                     marginBottom: '1.5rem',
                     padding: '0.5rem',
-                    flexWrap: 'wrap'
+                    flexWrap: 'wrap',
+                    justifyContent: 'center'
                 }}>
                     <button 
                         className="tag-button"
@@ -349,56 +354,140 @@ const handleCreatePost = async () => {
                         Yoga
                     </button>
                 </div>
-                <div className = "feed-box">
+                <div className="feed-box" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px'
+                }}>
                     {posts.map((post, index) => (
-                        <div key = {index} className = "post-container"> 
-                            <div className = "username"> {post.username} </div>
-                            <div className = "description"> {post.description}</div>
+                        <div key={index} className="post-container" style={{
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            overflow: 'hidden'
+                        }}> 
                             <div style={{
-                                width: '100%',
-                                height: '300px',
-                                background: '#e0e0e0',
-                                borderRadius: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#888',
-                                fontSize: '1rem',
-                                margin: '0.5rem 0'
+                                padding: '12px 16px',
+                                borderBottom: '1px solid #efefef'
                             }}>
+                                <div className="username" style={{
+                                    fontWeight: '600',
+                                    fontSize: '14px'
+                                }}>{post.username}</div>
                             </div>
-                            <div className = "time"> 
-                                <div className = "start-time"> {post.startTime} </div>
-                                <div> - </div>
-                                <div className = "end-time"> {post.endTime} </div>
-                            </div>
-                            <div className = "like-container"> 
-                            <button className = "react-button" type="button" aria-label="like" onClick = {() => (setLikeState(index))} >👍 {post.likeCount}</button>
-                            <button className = "react-button" type="button" aria-label="comment" onClick = {() => (setCommentState(index))}>💬 {post.comments.length}</button>
-                            </div>
-                            {post.commentstate === false?(<div></div>):(<div className = "comment-container"> 
-                                {post.comments.map((comment, index) => (
-                                    <div key = {index} className = "comment-box">
-                                        <div className = "comment-username"> {comment.username} </div>
-                                        <div className = "comment-text"> {comment.text} </div>
-                                    </div>
-                                ))}
-                                <form  onSubmit={(e) => handleCommentSubmit(e, index)} className="mb-4"> 
-                                    <textarea
-                                        value={newComment}
-                                        onChange={handleCommentChange}
-                                        placeholder="Write a comment..."
-                                        className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        rows="3"
+                            {post.imageUrl ? (
+                                <div style={{
+                                    width: '100%',
+                                    position: 'relative',
+                                    paddingTop: '100%' // Creates a square aspect ratio
+                                }}>
+                                    <img 
+                                        src={post.imageUrl} 
+                                        alt="Post" 
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'contain',
+                                            backgroundColor: '#fafafa'
+                                        }}
                                     />
-                                    <button
-                                        type="submit"
-                                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                                        >
-                                        Submit
-                                    </button>
-                                </form>
-                            </div>)}
+                                </div>
+                            ) : (
+                                <div style={{
+                                    width: '100%',
+                                    paddingTop: '100%',
+                                    background: '#fafafa',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#888',
+                                    fontSize: '1rem'
+                                }}>
+                                    No image
+                                </div>
+                            )}
+                            <div style={{
+                                padding: '12px 16px'
+                            }}>
+                                <div className="description" style={{
+                                    marginBottom: '8px',
+                                    fontSize: '14px'
+                                }}>{post.description}</div>
+                                <div className="time" style={{
+                                    color: '#8e8e8e',
+                                    fontSize: '12px',
+                                    marginBottom: '8px'
+                                }}> 
+                                    <div className="start-time">{post.startTime}</div>
+                                    <div> - </div>
+                                    <div className="end-time">{post.endTime}</div>
+                                </div>
+                                <div className="like-container" style={{
+                                    borderTop: '1px solid #efefef',
+                                    paddingTop: '8px'
+                                }}> 
+                                    <button className="react-button" type="button" aria-label="like" onClick={() => (setLikeState(index))}>👍 {post.likeCount}</button>
+                                    <button className="react-button" type="button" aria-label="comment" onClick={() => (setCommentState(index))}>💬 {post.comments.length}</button>
+                                </div>
+                                {post.commentstate === false ? (<div></div>) : (
+                                    <div className="comment-container" style={{
+                                        marginTop: '8px',
+                                        padding: '0 16px'
+                                    }}> 
+                                        {post.comments.map((comment, index) => (
+                                            <div key={index} className="comment-box" style={{
+                                                marginBottom: '4px',
+                                                fontSize: '14px'
+                                            }}>
+                                                <span className="comment-username" style={{
+                                                    fontWeight: '600',
+                                                    marginRight: '4px'
+                                                }}>{comment.username}</span>
+                                                <span className="comment-text">{comment.text}</span>
+                                            </div>
+                                        ))}
+                                        <form onSubmit={(e) => handleCommentSubmit(e, index)} style={{
+                                            marginTop: '8px',
+                                            borderTop: '1px solid #efefef',
+                                            paddingTop: '8px'
+                                        }}> 
+                                            <textarea
+                                                value={newComment}
+                                                onChange={handleCommentChange}
+                                                placeholder="Write a comment..."
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px',
+                                                    border: '1px solid #efefef',
+                                                    borderRadius: '4px',
+                                                    resize: 'none',
+                                                    fontSize: '14px'
+                                                }}
+                                                rows="2"
+                                            />
+                                            <button
+                                                type="submit"
+                                                style={{
+                                                    marginTop: '8px',
+                                                    padding: '6px 12px',
+                                                    backgroundColor: '#0095f6',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                Post
+                                            </button>
+                                        </form>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
