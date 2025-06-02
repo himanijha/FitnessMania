@@ -221,11 +221,13 @@ app.patch('/api/users/:userId', upload.single('profileImage'), async (req, res) 
   }
 });
 
-// Get current user profile (for demo: return first user)
+// Get current user profile by userId from query string
 app.get('/api/users/profile', async (req, res) => {
   try {
-    const user = await User.findOne();
-    if (!user) return res.status(404).json({ error: 'No user found' });
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -327,5 +329,37 @@ app.get('/api/users/:userId/posts', async (req, res) => {
       });
     } catch (error) {
       res.status(500).json({ message: 'Error updating fitness information: ' + error.message });
+    }
+  });
+
+  // Signin endpoint
+  app.post('/api/signin', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      // Find user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Compare password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      res.json({ 
+        message: 'Login successful',
+        userId: user._id.toString(),
+        user: {
+          _id: user._id.toString(),
+          username: user.username,
+          email: user.email
+        }
+      });
+    } catch (error) {
+      console.error('Signin error:', error);
+      res.status(500).json({ message: 'Error signing in: ' + error.message });
     }
   });
