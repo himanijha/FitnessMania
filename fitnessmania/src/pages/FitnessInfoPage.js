@@ -74,7 +74,7 @@ function FitnessInfoPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="height" className="block text-gray-700 mb-1">Height (cm)</label>
+            <label htmlFor="height" className="block text-gray-700 mb-1">Height (in)</label>
             <input
               type="number"
               id="height"
@@ -87,7 +87,7 @@ function FitnessInfoPage() {
           </div>
 
           <div>
-            <label htmlFor="weight" className="block text-gray-700 mb-1">Weight (kg)</label>
+            <label htmlFor="weight" className="block text-gray-700 mb-1">Weight (lbs)</label>
             <input
               type="number"
               id="weight"

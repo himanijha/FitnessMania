@@ -273,8 +273,11 @@ const handleCreatePost = async () => {
                     </div>
                     
                 </div>
-                <div className = "daily-challenge-container">
-                <div className = "header-text">Challenges</div>
+                <div className = "daily-challenge-container" 
+                    onClick={() => navigate('/leaderboard')} 
+                    style={{ cursor: 'pointer' }}
+                >
+                    <div className = "header-text">Challenges</div>
                     <div className = "daily-challenge">
                         12,000 Steps 
                     </div>
