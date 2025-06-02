@@ -2,73 +2,44 @@ import { useEffect, useState } from 'react';
 import '../styles/Leaderboard.css';
 import { Link, useNavigate } from 'react-router-dom';
 
-function ReminderCard() {
-  return (
-    <div className="reminders">
-      <h3>Reminders</h3>
-      <ul>
-        <li>Stay hydrated</li>
-        <li>Stretch before matches</li>
-        <li>Log your score daily</li>
-      </ul>
-    </div>
-  );
-}
-
-function LeaderboardRow({ rank, user }) {
-  return (
-    <tr>
-      <td>{rank}</td>
-      <td className="user-cell">{user.username}</td>
-      <td>{user.score}</td>
-      <td>{user.time}</td>
-    </tr>
-  );
-}
-
-export default function Leaderboard() {
+export default function LeaderboardPage() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    const data = [
-      { id: 1, name: 'Serena Williams', score: 15, time: '8:00 AM' },
-      { id: 2, name: 'Venus Williams', score: 13, time: '8:45 AM' },
-      { id: 3, name: 'Coco Gauff', score: 11, time: '9:10 AM' },
-    ];
-    setUsers(data);
+    fetch('http://localhost:3000/api/users', {
+      headers: {
+        'Authorization': 'Basic ' + btoa('admin:password')
+      }
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const sorted = data.sort((a, b) => b.dailychallenge_score - a.dailychallenge_score);
+        setUsers(sorted);
+      })
+      .catch((err) => console.error('Error fetching users:', err));
   }, []);
 
   return (
-    <div className="leaderboard-container">
-      <div className="leaderboard-card">
-        <div className="leaderboard-header">
-          <h2>
-            Daily Challenge: <span className="highlight">Tennis</span>
-          </h2>
-          <button className="refresh-button">Refresh</button>
-        </div>
-
-        <table className="leaderboard-table">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>User</th>
-              <th>Score</th>
-              <th>Time</th>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">Leaderboard</h1>
+      <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow">
+        <thead>
+          <tr className="bg-gray-100 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+            <th className="px-6 py-3">Rank</th>
+            <th className="px-6 py-3">Username</th>
+            <th className="px-6 py-3">Daily Challenge Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user, index) => (
+            <tr key={user._id} className="border-t">
+              <td className="px-6 py-4">{index + 1}</td>
+              <td className="px-6 py-4">{user.username}</td>
+              <td className="px-6 py-4">{user.dailychallenge_score}</td>
             </tr>
-          </thead>
-          <tbody>
-            {users.map((user, idx) => (
-              <LeaderboardRow key={user.id} rank={idx + 1} user={user} />
-            ))}
-          </tbody>
-        </table>
-
-        <div className="leaderboard-footer">
-          <ReminderCard />
-          <button className="share-button">📤 Share Results</button>
-        </div>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
