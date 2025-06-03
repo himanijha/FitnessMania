@@ -6,29 +6,17 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import SignupPage from './pages/SignupPage';
 import FitnessInfoPage from './pages/FitnessInfoPage';
 import LoginPage from './pages/LoginPage';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import NavBar from './components/NavBar';
 
 function App() {
-  
-
   return (
     <Router>
-      <nav className="bg-gray-800 p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex space-x-6">
-            <Link to="/" className="text-white hover:text-gray-300 transition duration-300">Landing</Link>
-            <Link to="/dashboard" className="text-white hover:text-gray-300 transition duration-300">Dashboard</Link>
-            <Link to="/user-profile" className="text-white hover:text-gray-300 transition duration-300">UserProfile</Link>
-            <Link to="/leaderboard" className="text-white hover:text-gray-300 transition duration-300">Leaderboard</Link>
-            <Link to="/login" className="text-white hover:text-gray-300 transition duration-300">Login</Link>
-          </div>
-        </div>
-      </nav>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/user-profile" element={<UserProfile />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/dashboard" element={<><NavBar /><Dashboard /></>} />
+        <Route path="/user-profile" element={<><NavBar /><UserProfile /></>} />
+        <Route path="/leaderboard" element={<><NavBar /><LeaderboardPage /></>} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/fitness-info" element={<FitnessInfoPage />} />
         <Route path="/login" element={<LoginPage />} />
