@@ -62,28 +62,72 @@ function Dashboard() {
     });
 };
 
-  const setLikeState = (index) => {
-    const post = posts[index]; // get logged-in userId from your context or props
+  const setLikeState = async (index) => {
+    if (!userData || !userData._id) {
+      console.error('User data not available for liking.');
+      return;
+    }
 
-  fetch(`http://localhost:3000/api/posts/${post._id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Basic ' + btoa('admin:password'),
-    },
-    body: JSON.stringify({ userId }),
-  })
-    .then((res) => {
-      if (!res.ok) throw new Error('Failed to toggle like');
-      return res.json();
-    })
-    .then((updatedPost) => {
+    const post = posts[index];
+    const userId = userData._id;
+    console.log('Current post state:', post);
+    console.log('User ID:', userId);
+
+    // Optimistically update the state
+    setPosts((prevPosts) =>
+      prevPosts.map((p, i) =>
+        i === index ? {
+          ...p,
+          likes: p.likes?.includes(userId) 
+            ? p.likes.filter(id => id !== userId)
+            : [...(p.likes || []), userId],
+          likeCount: p.likes?.includes(userId) 
+            ? (p.likeCount || 0) - 1 
+            : (p.likeCount || 0) + 1
+        } : p
+      )
+    );
+
+    // Send the update to the backend
+    try {
+      const postId = post._id;
+      console.log('Sending like update for post:', postId);
+      const response = await fetch(`http://localhost:3000/api/posts/${postId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
+        body: JSON.stringify({ userId: userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update like status');
+      }
+
+      const updatedPost = await response.json();
+      console.log('Received updated post from backend:', updatedPost);
+      
+      // Update the state with the response from the backend
       setPosts((prevPosts) =>
-        prevPosts.map((p) => (p._id === updatedPost._id ? updatedPost : p))
+        prevPosts.map((p, i) =>
+          i === index ? {
+            ...p,
+            ...updatedPost,  // Spread the entire updated post
+            likes: updatedPost.likes || [],
+            likeCount: updatedPost.likeCount || 0
+          } : p
+        )
       );
-    })
-    .catch((error) => console.error('Error updating post:', error));
-};
+
+    } catch (error) {
+      console.error('Error updating like status:', error);
+      // Revert optimistic update on error
+      setPosts((prevPosts) =>
+        prevPosts.map((p, i) => (i === index ? post : p))
+      );
+    }
+  };
 
 const handleCommentChange = (e) => {
     setNewComment(e.target.value);

@@ -133,7 +133,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
       const user = await User.findById(userId);
       console.log("Finding ", tag, " ", user.username);
-      const posts = await Post.find({ tag: tag, username: user.username });
+      const posts = await Post.find({ tags: tag, username: user.username });
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
@@ -195,18 +195,26 @@ mongoose.connect(process.env.MONGODB_URI)
           post.likes.splice(userLikedIndex, 1);
           post.likeCount = Math.max(0, (post.likeCount || 0) - 1); // Ensure likeCount doesn't go below 0
         }
-        // Remove userId from updates so it's not attempted to be set on the Post model directly
-        delete updates.userId;
+        
+        // Save only the likes and likeCount
+        await Post.findByIdAndUpdate(id, {
+          likes: post.likes,
+          likeCount: post.likeCount
+        }, { new: true, runValidators: false });
+
+        // Return the updated post
+        const updatedPost = await Post.findById(id);
+        res.json(updatedPost);
+        return;
       }
 
-      // Apply other updates (if any)
-      Object.assign(post, updates);
-
-      const updatedPost = await post.save(); // Save the updated post
-
-      console.log('Updated post in server:', updatedPost);
-
-      res.json(updatedPost);
+      // Handle other updates (if any)
+      if (Object.keys(updates).length > 0) {
+        const updatedPost = await Post.findByIdAndUpdate(id, updates, { new: true });
+        res.json(updatedPost);
+      } else {
+        res.json(post);
+      }
     } catch (error) {
       console.error('Error updating post:', error);
       res.status(500).json({ error: error.message });
