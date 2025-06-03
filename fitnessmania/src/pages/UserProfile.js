@@ -16,7 +16,7 @@ function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
   const [openNewPost, setOpenNewPost] = useState(false);
-  const [newPost, setNewPost] = useState({ title: '', content: '', duration: '' });
+  const [newPost, setNewPost] = useState({ title: '', content: '', duration: '', activityType: '' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
@@ -103,12 +103,18 @@ function UserProfile() {
         setPostError('Please enter the workout duration');
         return;
       }
+      if (!newPost.activityType) {
+        setPostError('Please select an activity type');
+        return;
+      }
 
       const formData = new FormData();
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
       formData.append('duration', newPost.duration);
+      formData.append('activityType', newPost.activityType);
+      formData.append('tags', newPost.activityType); // Use activityType as tags for backward compatibility
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -138,7 +144,7 @@ function UserProfile() {
       }, ...prevPosts]);
 
       setOpenNewPost(false);
-      setNewPost({ title: '', content: '', duration: '' });
+      setNewPost({ title: '', content: '', duration: '', activityType: '' });
       setImageFile(null);
       setImagePreview(null);
       setPostError('');
@@ -576,6 +582,21 @@ function UserProfile() {
                 setPostError('');
               }}
             />
+            <select
+              className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={newPost.activityType}
+              onChange={(e) => {
+                setNewPost({ ...newPost, activityType: e.target.value });
+                setPostError('');
+              }}
+            >
+              <option value="">Select Activity Type</option>
+              <option value="Run">Run</option>
+              <option value="Bike">Bike</option>
+              <option value="Swim">Swim</option>
+              <option value="Yoga">Yoga</option>
+              <option value="Weight Lifting">Weight Lifting</option>
+            </select>
             <input
               type="file"
               accept="image/*"

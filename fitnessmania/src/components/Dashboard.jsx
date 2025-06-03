@@ -10,7 +10,7 @@ function Dashboard() {
     const [newComment, setNewComment] = useState();
     const [userData, setUserData] = useState(null);
     const [openNewPost, setOpenNewPost] = useState(false);
-    const [newPost, setNewPost] = useState({ title: '', content: '', duration: '' });
+    const [newPost, setNewPost] = useState({ title: '', content: '', duration: '', activityType: '' });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [postError, setPostError] = useState('');
@@ -163,12 +163,18 @@ const handleCreatePost = async () => {
         setPostError('Please enter the workout duration');
         return;
       }
+      if (!newPost.activityType) {
+        setPostError('Please select an activity type');
+        return;
+      }
 
       const formData = new FormData();
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
       formData.append('duration', newPost.duration);
+      formData.append('activityType', newPost.activityType);
+      formData.append('tags', newPost.activityType); // Use activityType as tags for backward compatibility
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -198,7 +204,7 @@ const handleCreatePost = async () => {
       }, ...prevPosts]);
 
       setOpenNewPost(false);
-      setNewPost({ title: '', content: '', duration: '' });
+      setNewPost({ title: '', content: '', duration: '', activityType: '' });
       setImageFile(null);
       setImagePreview(null);
       setPostError('');
@@ -390,7 +396,7 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Run
+                        Running
                     </button>
                     <button 
                         className="tag-button"
@@ -409,7 +415,7 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Bike
+                        Biking
                     </button>
                     <button 
                         className="tag-button"
@@ -447,11 +453,11 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Swim
+                        Swimming
                     </button>
                     <button 
                         className="tag-button"
-                        onClick={() => handleTagSelect('Weights')}
+                        onClick={() => handleTagSelect('Weight Lifting')}
                         style={{
                             padding: '0.5rem 1.5rem',
                             borderRadius: '20px',
@@ -639,6 +645,21 @@ const handleCreatePost = async () => {
                         setPostError('');
                     }}
                   />
+                  <select
+                    className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newPost.activityType}
+                    onChange={(e) => {
+                        setNewPost({ ...newPost, activityType: e.target.value });
+                        setPostError('');
+                    }}
+                  >
+                    <option value="">Select Activity Type</option>
+                    <option value="Run">Running</option>
+                    <option value="Bike">Biking</option>
+                    <option value="Swim">Swimming</option>
+                    <option value="Yoga">Yoga</option>
+                    <option value="Weight Lifting">Weight Lifting</option>
+                  </select>
                   <input
                     type="file"
                     accept="image/*"

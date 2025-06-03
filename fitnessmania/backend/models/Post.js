@@ -10,6 +10,7 @@ const postsSchema = new mongoose.Schema({
     title: { type: String, required: true },
     duration: { type: String, required: true },
     description: { type: String, required: true },
+    activityType: { type: String, required: true, enum: ['Run', 'Bike', 'Swim', 'Yoga', 'Weight Lifting'] },
     // commentstate: { type: Boolean, default: false },
     likeCount: { type: Number, default: 0 },
     comments: [commentSchema],
