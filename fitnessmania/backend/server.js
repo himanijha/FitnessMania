@@ -122,11 +122,18 @@ mongoose.connect(process.env.MONGODB_URI)
 // Handle creating a new post
   app.post('/api/posts', upload.single('image'), async (req, res) => {
     try {
-      const { username, title, description } = req.body;
+      const { username, title, description, startTime, endTime } = req.body;
       // Get the image URL from the Cloudinary upload result
       const imageUrl = req.file ? req.file.path : null; 
 
-      const newPost = new Post({ username, title, description, imageUrl });
+      const newPost = new Post({ 
+        username, 
+        title, 
+        description, 
+        imageUrl,
+        startTime,
+        endTime
+      });
       const savedPost = await newPost.save();
 
       res.status(201).json(savedPost);
