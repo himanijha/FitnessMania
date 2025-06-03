@@ -54,6 +54,16 @@ const userSchema = new mongoose.Schema({
   dailychallenge_score: {
     type: Number,
     default: 0
+  },
+  goals: {
+    type: Object,
+    default: {
+      run: 1,
+      bike: 1,
+      yoga: 1,
+      swim: 1,
+      weights: 1,
+    }
   }
 });
 

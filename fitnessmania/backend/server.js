@@ -119,6 +119,24 @@ mongoose.connect(process.env.MONGODB_URI)
     }
   });
 
+  app.get('/api/posts/:tag/:userId', async (req, res) => {
+    console.log("hit the route");
+    try {
+      // Fetch the user by ID to get their username
+      const { tag, userId } = req.params;
+
+      const user = await User.findById(userId);
+      console.log("Finding ", tag, " ", user.username);
+      const posts = await Post.find({ tag: tag, username: user.username });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.json(posts);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
 // Handle creating a new post
   app.post('/api/posts', upload.single('image'), async (req, res) => {
     try {
@@ -177,6 +195,36 @@ mongoose.connect(process.env.MONGODB_URI)
       res.json(updatedPost);
     } catch (error) {
       console.error('Error updating post:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch('/api/users/:userId/goals', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { goals } = req.body;
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Initialize goals object if it doesn't exist
+      if (!user.goals) {
+        user.goals = {};
+      }
+
+      // Update only the specific goal that was passed in
+      // This will overwrite any existing value for that goal
+      user.goals = {
+        ...user.goals,
+        ...goals
+      };
+      
+      const updatedUser = await user.save();
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user goals:', error);
       res.status(500).json({ error: error.message });
     }
   });

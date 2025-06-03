@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from 'react-router-dom';
 
 function UserProfile() {
-  const { userId, loading: authLoading, logout } = useAuth();
-  const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
@@ -16,46 +12,17 @@ function UserProfile() {
   const [editedUsername, setEditedUsername] = useState('');
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState(null);
-  const [editedFitnessInfo, setEditedFitnessInfo] = useState({
-    age: '',
-    gender: '',
-    height: '',
-    weight: '',
-    fitness_goal: ''
-  });
   const [newComment, setNewComment] = useState('');
-  const [postError, setPostError] = useState('');
 
   useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-
     // Fetch user data
-    fetch(`http://localhost:3000/api/users/profile?userId=${userId}`, {
-      headers: {
-        'Authorization': 'Basic ' + btoa('admin:password')
-      }
-    })
+    fetch('http://localhost:3000/api/users/profile')
       .then(response => response.json())
       .then(data => {
         setUserData(data);
         setLoading(false);
-        // Initialize fitness info for editing
-        setEditedFitnessInfo({
-          age: data.age || '',
-          gender: data.gender || '',
-          height: data.height || '',
-          weight: data.weight || '',
-          fitness_goal: data.fitness_goal || ''
-        });
         // After getting user data, fetch their posts
-        return fetch(`http://localhost:3000/api/users/${data._id}/posts`, {
-          headers: {
-            'Authorization': 'Basic ' + btoa('admin:password')
-          }
-        });
+        return fetch(`http://localhost:3000/api/users/${data._id}/posts`);
       })
       .then(response => response.json())
       .then(posts => {
@@ -67,7 +34,7 @@ function UserProfile() {
         console.error('Error:', error);
         setLoading(false);
       });
-  }, [userId]);
+  }, []);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -83,30 +50,12 @@ function UserProfile() {
 
   const handleCreatePost = async () => {
     try {
-      // Validate required fields
-      if (!newPost.title.trim()) {
-        setPostError('Please enter a title');
-        return;
-      }
-      if (!newPost.content.trim()) {
-        setPostError('Please enter a description');
-        return;
-      }
-      if (!newPost.startTime.trim()) {
-        setPostError('Please enter a start time');
-        return;
-      }
-      if (!newPost.endTime.trim()) {
-        setPostError('Please enter an end time');
-        return;
-      }
-
       const formData = new FormData();
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
-      formData.append('startTime', newPost.startTime);
-      formData.append('endTime', newPost.endTime);
+      formData.append('startTime', newPost.startTime || '');
+      formData.append('endTime', newPost.endTime || '');
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -120,10 +69,8 @@ function UserProfile() {
       setNewPost({ title: '', content: '', startTime: '', endTime: '' });
       setImageFile(null);
       setImagePreview(null);
-      setPostError(''); // Clear any previous errors
     } catch (error) {
       console.error('Error creating post:', error);
-      setPostError('Failed to create post. Please try again.');
     }
   };
 
@@ -134,12 +81,6 @@ function UserProfile() {
       if (editImageFile) {
         formData.append('profileImage', editImageFile);
       }
-      // Append fitness information
-      formData.append('age', editedFitnessInfo.age);
-      formData.append('gender', editedFitnessInfo.gender);
-      formData.append('height', editedFitnessInfo.height);
-      formData.append('weight', editedFitnessInfo.weight);
-      formData.append('fitness_goal', editedFitnessInfo.fitness_goal);
 
       console.log('Sending update request with formData:', Object.fromEntries(formData.entries()));
 
@@ -275,31 +216,10 @@ function UserProfile() {
     }
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (!userId) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Please log in to view your profile</h2>
-          <a href="/login" className="text-blue-500 hover:text-blue-600">Go to Login</a>
-        </div>
-      </div>
-    );
-  }
-
-  if (!userData) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">User not found</h2>
-        </div>
       </div>
     );
   }
@@ -326,7 +246,7 @@ function UserProfile() {
             <div className="text-center">
               <div className="w-32 h-32 rounded-full bg-gray-200 mx-auto mb-4 overflow-hidden">
                 <img
-                  src={user.profileImageUrl || 'https://www.shutterstock.com/image-vector/vector-flat-illustration-grayscale-avatar-600nw-2264922221.jpg'}
+                  src={user.profileImageUrl || '/path-to-user-avatar.jpg'}
                   alt={user.username}
                   className="w-full h-full object-cover"
                 />
@@ -336,50 +256,17 @@ function UserProfile() {
               <p className="text-gray-500 text-sm mb-6">
                 Member since: {new Date(user.createdAt).toLocaleDateString()}
               </p>
-              
-              {/* Fitness Information Section */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">Fitness Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Age</p>
-                    <p className="font-medium">{user.age || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Gender</p>
-                    <p className="font-medium">{user.gender || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Height</p>
-                    <p className="font-medium">{user.height ? `${user.height} cm` : 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Weight</p>
-                    <p className="font-medium">{user.weight ? `${user.weight} kg` : 'Not specified'}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-sm text-gray-600">Fitness Goal</p>
-                    <p className="font-medium">{user.fitness_goal || 'Not specified'}</p>
-                  </div>
-                </div>
-              </div>
-
               <button 
                 onClick={() => { 
                   setOpenEditProfile(true);
                   setEditedUsername(user.username || ''); 
                   setEditImageFile(null);
-                  setEditImagePreview(user.profileImageUrl || 'https://www.shutterstock.com/image-vector/vector-flat-illustration-grayscale-avatar-600nw-2264922221.jpg'); 
+                  setEditImagePreview(user.profileImageUrl || '/path-to-user-avatar.jpg'); 
                 }}
                 className="w-full bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors mb-6"
               >
                 Edit Profile
               </button>
-              <button onClick = {() => {
-                logout();
-                navigate('/')
-                
-              }}>Logout</button>
             </div>
           </div>
         </div>
@@ -472,49 +359,34 @@ function UserProfile() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg">
             <h2 className="text-2xl font-bold mb-4">Create New Post</h2>
-            {postError && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                {postError}
-              </div>
-            )}
             <input
               type="text"
               placeholder="Title"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.title}
-              onChange={(e) => {
-                setNewPost({ ...newPost, title: e.target.value });
-                setPostError(''); // Clear error when user types
-              }}
+              onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
             />
             <textarea
               placeholder="Description"
               className="w-full border rounded-lg p-2 mb-4 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.content}
-              onChange={(e) => {
-                setNewPost({ ...newPost, content: e.target.value });
-                setPostError(''); // Clear error when user types
-              }}
+              onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
             />
+            {/* Add Start Time Input */}
             <input
               type="text"
               placeholder="Start Time (e.g., 9:00 AM)"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.startTime}
-              onChange={(e) => {
-                setNewPost({ ...newPost, startTime: e.target.value });
-                setPostError(''); // Clear error when user types
-              }}
+              onChange={(e) => setNewPost({ ...newPost, startTime: e.target.value })}
             />
+            {/* Add End Time Input */}
             <input
               type="text"
               placeholder="End Time (e.g., 10:00 AM)"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.endTime}
-              onChange={(e) => {
-                setNewPost({ ...newPost, endTime: e.target.value });
-                setPostError(''); // Clear error when user types
-              }}
+              onChange={(e) => setNewPost({ ...newPost, endTime: e.target.value })}
             />
             <input
               type="file"
@@ -527,12 +399,7 @@ function UserProfile() {
             )}
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => { 
-                  setOpenNewPost(false); 
-                  setImageFile(null); 
-                  setImagePreview(null);
-                  setPostError(''); // Clear error when closing
-                }}
+                onClick={() => { setOpenNewPost(false); setImageFile(null); setImagePreview(null); }}
                 className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
               >
                 Cancel
@@ -568,7 +435,7 @@ function UserProfile() {
                   reader.onloadend = () => setEditImagePreview(reader.result);
                   reader.readAsDataURL(file);
                 } else {
-                  setEditImagePreview(user.profileImageUrl || 'https://www.shutterstock.com/image-vector/vector-flat-illustration-grayscale-avatar-600nw-2264922221.jpg');
+                  setEditImagePreview(user.profileImageUrl || '/path-to-user-avatar.jpg');
                 }
               }}
             />
@@ -579,69 +446,6 @@ function UserProfile() {
               value={editedUsername}
               onChange={(e) => setEditedUsername(e.target.value)}
             />
-            
-            {/* Fitness Information Fields */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                <input
-                  type="number"
-                  placeholder="Age"
-                  className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={editedFitnessInfo.age}
-                  onChange={(e) => setEditedFitnessInfo({...editedFitnessInfo, age: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                <select
-                  className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={editedFitnessInfo.gender}
-                  onChange={(e) => setEditedFitnessInfo({...editedFitnessInfo, gender: e.target.value})}
-                >
-                  <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
-                <input
-                  type="number"
-                  placeholder="Height"
-                  className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={editedFitnessInfo.height}
-                  onChange={(e) => setEditedFitnessInfo({...editedFitnessInfo, height: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-                <input
-                  type="number"
-                  placeholder="Weight"
-                  className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={editedFitnessInfo.weight}
-                  onChange={(e) => setEditedFitnessInfo({...editedFitnessInfo, weight: e.target.value})}
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fitness Goal</label>
-                <select
-                  className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={editedFitnessInfo.fitness_goal}
-                  onChange={(e) => setEditedFitnessInfo({...editedFitnessInfo, fitness_goal: e.target.value})}
-                >
-                  <option value="">Select goal</option>
-                  <option value="Weight Loss">Weight Loss</option>
-                  <option value="Muscle Gain">Muscle Gain</option>
-                  <option value="Endurance">Endurance</option>
-                  <option value="Flexibility">Flexibility</option>
-                  <option value="General Fitness">General Fitness</option>
-                </select>
-              </div>
-            </div>
-
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setOpenEditProfile(false)}
