@@ -16,7 +16,7 @@ function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
   const [openNewPost, setOpenNewPost] = useState(false);
-  const [newPost, setNewPost] = useState({ title: '', content: '', startTime: '', endTime: '' });
+  const [newPost, setNewPost] = useState({ title: '', content: '', duration: '' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
@@ -99,12 +99,8 @@ function UserProfile() {
         setPostError('Please enter a description');
         return;
       }
-      if (!newPost.startTime.trim()) {
-        setPostError('Please enter a start time');
-        return;
-      }
-      if (!newPost.endTime.trim()) {
-        setPostError('Please enter an end time');
+      if (!newPost.duration.trim()) {
+        setPostError('Please enter the workout duration');
         return;
       }
 
@@ -112,9 +108,7 @@ function UserProfile() {
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
-      formData.append('content', newPost.content);
-      formData.append('startTime', newPost.startTime);
-      formData.append('endTime', newPost.endTime);
+      formData.append('duration', newPost.duration);
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -144,7 +138,7 @@ function UserProfile() {
       }, ...prevPosts]);
 
       setOpenNewPost(false);
-      setNewPost({ title: '', content: '', startTime: '', endTime: '' });
+      setNewPost({ title: '', content: '', duration: '' });
       setImageFile(null);
       setImagePreview(null);
       setPostError('');
@@ -461,7 +455,7 @@ function UserProfile() {
                     )}
                     <div className="flex items-center text-gray-500 text-sm">
                       <i className="far fa-clock mr-2"></i>
-                      {post.startTime} - {post.endTime}
+                      {new Date(post.createdAt).toLocaleDateString()} • {post.duration}
                     </div>
                     {/* Add Likes and Comments Display */}
                     <div className="flex items-center space-x-4 mt-4">
@@ -527,7 +521,7 @@ function UserProfile() {
               value={newPost.title}
               onChange={(e) => {
                 setNewPost({ ...newPost, title: e.target.value });
-                setPostError(''); // Clear error when user types
+                setPostError('');
               }}
             />
             <textarea
@@ -536,27 +530,17 @@ function UserProfile() {
               value={newPost.content}
               onChange={(e) => {
                 setNewPost({ ...newPost, content: e.target.value });
-                setPostError(''); // Clear error when user types
+                setPostError('');
               }}
             />
             <input
               type="text"
-              placeholder="Start Time (e.g., 9:00 AM)"
+              placeholder="Workout Duration (e.g., 45 minutes)"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newPost.startTime}
+              value={newPost.duration}
               onChange={(e) => {
-                setNewPost({ ...newPost, startTime: e.target.value });
-                setPostError(''); // Clear error when user types
-              }}
-            />
-            <input
-              type="text"
-              placeholder="End Time (e.g., 10:00 AM)"
-              className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newPost.endTime}
-              onChange={(e) => {
-                setNewPost({ ...newPost, endTime: e.target.value });
-                setPostError(''); // Clear error when user types
+                setNewPost({ ...newPost, duration: e.target.value });
+                setPostError('');
               }}
             />
             <input
@@ -574,7 +558,7 @@ function UserProfile() {
                   setOpenNewPost(false); 
                   setImageFile(null); 
                   setImagePreview(null);
-                  setPostError(''); // Clear error when closing
+                  setPostError('');
                 }}
                 className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
               >
