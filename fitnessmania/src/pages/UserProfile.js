@@ -105,22 +105,42 @@ function UserProfile() {
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
+      formData.append('content', newPost.content);
       formData.append('startTime', newPost.startTime);
       formData.append('endTime', newPost.endTime);
       if (imageFile) {
         formData.append('image', imageFile);
       }
+
       const response = await fetch('http://localhost:3000/api/posts', {
         method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
         body: formData,
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create post');
+      }
+
       const savedPost = await response.json();
-      setPosts([savedPost, ...posts]);
+      
+      // Add the new post to the beginning of the posts array
+      setPosts(prevPosts => [{
+        ...savedPost,
+        commentstate: true,
+        likes: savedPost.likes || [],
+        likeCount: savedPost.likeCount || 0,
+        comments: savedPost.comments || []
+      }, ...prevPosts]);
+
       setOpenNewPost(false);
       setNewPost({ title: '', content: '', startTime: '', endTime: '' });
       setImageFile(null);
       setImagePreview(null);
-      setPostError(''); // Clear any previous errors
+      setPostError('');
     } catch (error) {
       console.error('Error creating post:', error);
       setPostError('Failed to create post. Please try again.');
@@ -145,6 +165,9 @@ function UserProfile() {
 
       const response = await fetch(`http://localhost:3000/api/users/${userData._id}`, {
         method: 'PATCH',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
         body: formData,
       });
 
@@ -155,7 +178,20 @@ function UserProfile() {
 
       const updatedUser = await response.json();
       console.log('Received updated user data:', updatedUser);
-      setUserData(updatedUser);
+      
+      // Update the userData state with the new information
+      setUserData(prevData => ({
+        ...prevData,
+        ...updatedUser,
+        age: updatedUser.age || prevData.age,
+        gender: updatedUser.gender || prevData.gender,
+        height: updatedUser.height || prevData.height,
+        weight: updatedUser.weight || prevData.weight,
+        fitness_goal: updatedUser.fitness_goal || prevData.fitness_goal,
+        username: updatedUser.username || prevData.username,
+        profileImageUrl: updatedUser.profileImageUrl || prevData.profileImageUrl
+      }));
+
       setOpenEditProfile(false);
       setEditedUsername('');
       setEditImageFile(null);
@@ -343,23 +379,23 @@ function UserProfile() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Age</p>
-                    <p className="font-medium">{user.age || 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.age || user.age || 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Gender</p>
-                    <p className="font-medium">{user.gender || 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.gender || user.gender || 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Height</p>
-                    <p className="font-medium">{user.height ? `${user.height} cm` : 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.height ? `${editedFitnessInfo.height} cm` : user.height ? `${user.height} cm` : 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Weight</p>
-                    <p className="font-medium">{user.weight ? `${user.weight} kg` : 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.weight ? `${editedFitnessInfo.weight} kg` : user.weight ? `${user.weight} kg` : 'Not specified'}</p>
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm text-gray-600">Fitness Goal</p>
-                    <p className="font-medium">{user.fitness_goal || 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.fitness_goal || user.fitness_goal || 'Not specified'}</p>
                   </div>
                 </div>
               </div>
@@ -412,13 +448,13 @@ function UserProfile() {
                 {posts.map((post, index) => (
                   <div key={post._id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
-                    <p className="text-gray-700 mb-4">{post.content}</p>
+                    <p className="text-gray-700 mb-4">{post.description || post.content}</p>
                     {post.imageUrl && (
                       <img src={post.imageUrl} alt="Post" className="mb-4 max-h-60 rounded-lg mx-auto" />
                     )}
                     <div className="flex items-center text-gray-500 text-sm">
                       <i className="far fa-clock mr-2"></i>
-                      {new Date(post.createdAt).toLocaleDateString()}
+                      {post.startTime} - {post.endTime}
                     </div>
                     {/* Add Likes and Comments Display */}
                     <div className="flex items-center space-x-4 mt-4">
