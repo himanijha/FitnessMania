@@ -9,9 +9,9 @@ const PersonalActivity = () => {
     bike: { goal: 0, current: 0 },
     yoga: { goal: 0, current: 0 },
     swim: { goal: 0, current: 0 },
-    weights: { goal: 0, current: 0 },
+    weights : { goal: 0, current: 0 },
   });
-  const tagOptions = ['Run', 'Bike', 'Yoga', 'Swim', 'Weights'];
+  const tagOptions = ['Run', 'Bike', 'Yoga', 'Swim', 'Weight Lifting'];
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
@@ -54,7 +54,9 @@ const PersonalActivity = () => {
         
         const posts = await response.json();
         console.log(`POST TAGS for ${tag}:`, posts);
-        
+        if (tag === "Weight Lifting") {
+          tag = "weights";
+        }
         setActivities(prev => ({
           ...prev,
           [tag.toLowerCase()]: { ...prev[tag.toLowerCase()], current: posts.length }
