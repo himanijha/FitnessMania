@@ -16,7 +16,7 @@ function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
   const [openNewPost, setOpenNewPost] = useState(false);
-  const [newPost, setNewPost] = useState({ title: '', content: '', startTime: '', endTime: '' });
+  const [newPost, setNewPost] = useState({ title: '', content: '', duration: '' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
@@ -99,12 +99,8 @@ function UserProfile() {
         setPostError('Please enter a description');
         return;
       }
-      if (!newPost.startTime.trim()) {
-        setPostError('Please enter a start time');
-        return;
-      }
-      if (!newPost.endTime.trim()) {
-        setPostError('Please enter an end time');
+      if (!newPost.duration.trim()) {
+        setPostError('Please enter the workout duration');
         return;
       }
 
@@ -112,22 +108,40 @@ function UserProfile() {
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
-      formData.append('startTime', newPost.startTime);
-      formData.append('endTime', newPost.endTime);
+      formData.append('duration', newPost.duration);
       if (imageFile) {
         formData.append('image', imageFile);
       }
+
       const response = await fetch('http://localhost:3000/api/posts', {
         method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
         body: formData,
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create post');
+      }
+
       const savedPost = await response.json();
-      setPosts([savedPost, ...posts]);
+      
+      // Add the new post to the beginning of the posts array
+      setPosts(prevPosts => [{
+        ...savedPost,
+        commentstate: true,
+        likes: savedPost.likes || [],
+        likeCount: savedPost.likeCount || 0,
+        comments: savedPost.comments || []
+      }, ...prevPosts]);
+
       setOpenNewPost(false);
-      setNewPost({ title: '', content: '', startTime: '', endTime: '' });
+      setNewPost({ title: '', content: '', duration: '' });
       setImageFile(null);
       setImagePreview(null);
-      setPostError(''); // Clear any previous errors
+      setPostError('');
     } catch (error) {
       console.error('Error creating post:', error);
       setPostError('Failed to create post. Please try again.');
@@ -152,6 +166,9 @@ function UserProfile() {
 
       const response = await fetch(`http://localhost:3000/api/users/${userData._id}`, {
         method: 'PATCH',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
         body: formData,
       });
 
@@ -162,7 +179,20 @@ function UserProfile() {
 
       const updatedUser = await response.json();
       console.log('Received updated user data:', updatedUser);
-      setUserData(updatedUser);
+      
+      // Update the userData state with the new information
+      setUserData(prevData => ({
+        ...prevData,
+        ...updatedUser,
+        age: updatedUser.age || prevData.age,
+        gender: updatedUser.gender || prevData.gender,
+        height: updatedUser.height || prevData.height,
+        weight: updatedUser.weight || prevData.weight,
+        fitness_goal: updatedUser.fitness_goal || prevData.fitness_goal,
+        username: updatedUser.username || prevData.username,
+        profileImageUrl: updatedUser.profileImageUrl || prevData.profileImageUrl
+      }));
+
       setOpenEditProfile(false);
       setEditedUsername('');
       setEditImageFile(null);
@@ -369,23 +399,23 @@ function UserProfile() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Age</p>
-                    <p className="font-medium">{user.age || 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.age || user.age || 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Gender</p>
-                    <p className="font-medium">{prettify(user.gender) || 'Not specified'}</p>
+                    <p className="font-medium">{prettify(editedFitnessInfo.gender) || prettify(user.gender) || 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Height</p>
-                    <p className="font-medium">{user.height ? `${user.height} cm` : 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.height ? `${editedFitnessInfo.height} cm` : user.height ? `${user.height} cm` : 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Weight</p>
-                    <p className="font-medium">{user.weight ? `${user.weight} kg` : 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.weight ? `${editedFitnessInfo.weight} kg` : user.weight ? `${user.weight} kg` : 'Not specified'}</p>
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm text-gray-600">Fitness Goal</p>
-                    <p className="font-medium">{prettify(user.fitness_goal) || 'Not specified'}</p>
+                    <p className="font-medium">{prettify(editedFitnessInfo.fitness_goal) || prettify(user.fitness_goal) || 'Not specified'}</p>
                   </div>
                 </div>
               </div>
@@ -446,13 +476,13 @@ function UserProfile() {
                         {post.username}
                       </span>
                     </div>
-                    <p className="text-gray-700 mb-4">{post.content}</p>
+                    <p className="text-gray-700 mb-4">{post.description || post.content}</p>
                     {post.imageUrl && (
                       <img src={post.imageUrl} alt="Post" className="mb-4 max-h-60 rounded-lg mx-auto" />
                     )}
                     <div className="flex items-center text-gray-500 text-sm">
                       <i className="far fa-clock mr-2"></i>
-                      {new Date(post.createdAt).toLocaleDateString()}
+                      {new Date(post.createdAt).toLocaleDateString()} • {post.duration}
                     </div>
                     {/* Add Likes and Comments Display */}
                     <div className="flex items-center space-x-4 mt-4">
@@ -524,7 +554,7 @@ function UserProfile() {
               value={newPost.title}
               onChange={(e) => {
                 setNewPost({ ...newPost, title: e.target.value });
-                setPostError(''); // Clear error when user types
+                setPostError('');
               }}
             />
             <textarea
@@ -533,27 +563,17 @@ function UserProfile() {
               value={newPost.content}
               onChange={(e) => {
                 setNewPost({ ...newPost, content: e.target.value });
-                setPostError(''); // Clear error when user types
+                setPostError('');
               }}
             />
             <input
               type="text"
-              placeholder="Start Time (e.g., 9:00 AM)"
+              placeholder="Workout Duration (e.g., 45 minutes)"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newPost.startTime}
+              value={newPost.duration}
               onChange={(e) => {
-                setNewPost({ ...newPost, startTime: e.target.value });
-                setPostError(''); // Clear error when user types
-              }}
-            />
-            <input
-              type="text"
-              placeholder="End Time (e.g., 10:00 AM)"
-              className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newPost.endTime}
-              onChange={(e) => {
-                setNewPost({ ...newPost, endTime: e.target.value });
-                setPostError(''); // Clear error when user types
+                setNewPost({ ...newPost, duration: e.target.value });
+                setPostError('');
               }}
             />
             <input
@@ -571,7 +591,7 @@ function UserProfile() {
                   setOpenNewPost(false); 
                   setImageFile(null); 
                   setImagePreview(null);
-                  setPostError(''); // Clear error when closing
+                  setPostError('');
                 }}
                 className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
               >
