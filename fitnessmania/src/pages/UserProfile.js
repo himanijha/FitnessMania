@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate, Link } from 'react-router-dom';
+
+function prettify(str) {
+  if (!str) return '';
+  return str
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
 
 function UserProfile() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
   const [openNewPost, setOpenNewPost] = useState(false);
-  const [newPost, setNewPost] = useState({ title: '', content: '', startTime: '', endTime: '' });
+  const [newPost, setNewPost] = useState({ title: '', content: '', duration: '', activityType: '' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [openEditProfile, setOpenEditProfile] = useState(false);
@@ -50,25 +59,64 @@ function UserProfile() {
 
   const handleCreatePost = async () => {
     try {
+      // Validate required fields
+      if (!newPost.title.trim()) {
+        setPostError('Please enter a title');
+        return;
+      }
+      if (!newPost.content.trim()) {
+        setPostError('Please enter a description');
+        return;
+      }
+      if (!newPost.duration.trim()) {
+        setPostError('Please enter the workout duration');
+        return;
+      }
+      if (!newPost.activityType) {
+        setPostError('Please select an activity type');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
-      formData.append('startTime', newPost.startTime || '');
-      formData.append('endTime', newPost.endTime || '');
+      formData.append('duration', newPost.duration);
+      formData.append('activityType', newPost.activityType);
+      formData.append('tags', newPost.activityType); // Use activityType as tags for backward compatibility
       if (imageFile) {
         formData.append('image', imageFile);
       }
+
       const response = await fetch('http://localhost:3000/api/posts', {
         method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
         body: formData,
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create post');
+      }
+
       const savedPost = await response.json();
-      setPosts([savedPost, ...posts]);
+      
+      // Add the new post to the beginning of the posts array
+      setPosts(prevPosts => [{
+        ...savedPost,
+        commentstate: true,
+        likes: savedPost.likes || [],
+        likeCount: savedPost.likeCount || 0,
+        comments: savedPost.comments || []
+      }, ...prevPosts]);
+
       setOpenNewPost(false);
-      setNewPost({ title: '', content: '', startTime: '', endTime: '' });
+      setNewPost({ title: '', content: '', duration: '', activityType: '' });
       setImageFile(null);
       setImagePreview(null);
+      setPostError('');
     } catch (error) {
       console.error('Error creating post:', error);
     }
@@ -86,6 +134,9 @@ function UserProfile() {
 
       const response = await fetch(`http://localhost:3000/api/users/${userData._id}`, {
         method: 'PATCH',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
         body: formData,
       });
 
@@ -96,7 +147,20 @@ function UserProfile() {
 
       const updatedUser = await response.json();
       console.log('Received updated user data:', updatedUser);
-      setUserData(updatedUser);
+      
+      // Update the userData state with the new information
+      setUserData(prevData => ({
+        ...prevData,
+        ...updatedUser,
+        age: updatedUser.age || prevData.age,
+        gender: updatedUser.gender || prevData.gender,
+        height: updatedUser.height || prevData.height,
+        weight: updatedUser.weight || prevData.weight,
+        fitness_goal: updatedUser.fitness_goal || prevData.fitness_goal,
+        username: updatedUser.username || prevData.username,
+        profileImageUrl: updatedUser.profileImageUrl || prevData.profileImageUrl
+      }));
+
       setOpenEditProfile(false);
       setEditedUsername('');
       setEditImageFile(null);
@@ -216,7 +280,45 @@ function UserProfile() {
     }
   };
 
-  if (loading) {
+  // Function to handle username click
+  const handleUsernameClick = async (username) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/users?username=${encodeURIComponent(username)}`, {
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        }
+      });
+      const users = await response.json();
+      if (Array.isArray(users) && users.length > 0) {
+        navigate(`/users/${users[0]._id}`);
+      } else {
+        alert('User not found');
+      }
+    } catch (err) {
+      alert('Error fetching user info');
+    }
+  };
+
+  // Function to handle username click
+  const handleUsernameClick = async (username) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/users?username=${encodeURIComponent(username)}`, {
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        }
+      });
+      const users = await response.json();
+      if (Array.isArray(users) && users.length > 0) {
+        navigate(`/users/${users[0]._id}`);
+      } else {
+        alert('User not found');
+      }
+    } catch (err) {
+      alert('Error fetching user info');
+    }
+  };
+
+  if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -256,6 +358,34 @@ function UserProfile() {
               <p className="text-gray-500 text-sm mb-6">
                 Member since: {new Date(user.createdAt).toLocaleDateString()}
               </p>
+              
+              {/* Fitness Information Section */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-700 mb-3">Fitness Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Age</p>
+                    <p className="font-medium">{editedFitnessInfo.age || user.age || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Gender</p>
+                    <p className="font-medium">{prettify(editedFitnessInfo.gender) || prettify(user.gender) || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Height</p>
+                    <p className="font-medium">{editedFitnessInfo.height ? `${editedFitnessInfo.height} cm` : user.height ? `${user.height} cm` : 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Weight</p>
+                    <p className="font-medium">{editedFitnessInfo.weight ? `${editedFitnessInfo.weight} kg` : user.weight ? `${user.weight} kg` : 'Not specified'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-600">Fitness Goal</p>
+                    <p className="font-medium">{prettify(editedFitnessInfo.fitness_goal) || prettify(user.fitness_goal) || 'Not specified'}</p>
+                  </div>
+                </div>
+              </div>
+
               <button 
                 onClick={() => { 
                   setOpenEditProfile(true);
@@ -299,13 +429,21 @@ function UserProfile() {
                 {posts.map((post, index) => (
                   <div key={post._id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
-                    <p className="text-gray-700 mb-4">{post.content}</p>
+                    <div className="flex items-center mb-2">
+                      <span
+                        className="text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                        onClick={() => handleUsernameClick(post.username)}
+                      >
+                        {post.username}
+                      </span>
+                    </div>
+                    <p className="text-gray-700 mb-4">{post.description || post.content}</p>
                     {post.imageUrl && (
                       <img src={post.imageUrl} alt="Post" className="mb-4 max-h-60 rounded-lg mx-auto" />
                     )}
                     <div className="flex items-center text-gray-500 text-sm">
                       <i className="far fa-clock mr-2"></i>
-                      {new Date(post.createdAt).toLocaleDateString()}
+                      {new Date(post.createdAt).toLocaleDateString()} • {post.duration}
                     </div>
                     {/* Add Likes and Comments Display */}
                     <div className="flex items-center space-x-4 mt-4">
@@ -325,7 +463,13 @@ function UserProfile() {
                       <div className="comment-container mt-4 bg-gray-100 p-4 rounded-lg">
                         {post.comments.map((comment, commentIndex) => (
                           <div key={commentIndex} className="comment-box mb-2 flex items-start">
-                            <div className="comment-username font-bold mr-2 text-blue-600">{comment.username}:</div>
+                            <span
+                              className="comment-username text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                              style={{ fontWeight: '600', marginRight: '4px' }}
+                              onClick={() => handleUsernameClick(comment.username)}
+                            >
+                              {comment.username}
+                            </span>
                             <div className="comment-text text-gray-800">{comment.text}</div>
                           </div>
                         ))}
@@ -364,30 +508,46 @@ function UserProfile() {
               placeholder="Title"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.title}
-              onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+              onChange={(e) => {
+                setNewPost({ ...newPost, title: e.target.value });
+                setPostError('');
+              }}
             />
             <textarea
               placeholder="Description"
               className="w-full border rounded-lg p-2 mb-4 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.content}
-              onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+              onChange={(e) => {
+                setNewPost({ ...newPost, content: e.target.value });
+                setPostError('');
+              }}
             />
             {/* Add Start Time Input */}
             <input
               type="text"
-              placeholder="Start Time (e.g., 9:00 AM)"
+              placeholder="Workout Duration (e.g., 45 minutes)"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newPost.startTime}
-              onChange={(e) => setNewPost({ ...newPost, startTime: e.target.value })}
+              value={newPost.duration}
+              onChange={(e) => {
+                setNewPost({ ...newPost, duration: e.target.value });
+                setPostError('');
+              }}
             />
-            {/* Add End Time Input */}
-            <input
-              type="text"
-              placeholder="End Time (e.g., 10:00 AM)"
+            <select
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newPost.endTime}
-              onChange={(e) => setNewPost({ ...newPost, endTime: e.target.value })}
-            />
+              value={newPost.activityType}
+              onChange={(e) => {
+                setNewPost({ ...newPost, activityType: e.target.value });
+                setPostError('');
+              }}
+            >
+              <option value="">Select Activity Type</option>
+              <option value="Run">Run</option>
+              <option value="Bike">Bike</option>
+              <option value="Swim">Swim</option>
+              <option value="Yoga">Yoga</option>
+              <option value="Weight Lifting">Weight Lifting</option>
+            </select>
             <input
               type="file"
               accept="image/*"
@@ -399,7 +559,12 @@ function UserProfile() {
             )}
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => { setOpenNewPost(false); setImageFile(null); setImagePreview(null); }}
+                onClick={() => { 
+                  setOpenNewPost(false); 
+                  setImageFile(null); 
+                  setImagePreview(null);
+                  setPostError('');
+                }}
                 className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
               >
                 Cancel

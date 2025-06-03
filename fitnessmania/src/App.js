@@ -7,6 +7,7 @@ import SignupPage from './pages/SignupPage';
 import FitnessInfoPage from './pages/FitnessInfoPage';
 import LoginPage from './pages/LoginPage';
 import PersonalActivity from './pages/PersonalActivityPage';
+import PublicProfilePage from './pages/PublicProfilePage';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NavBar from './components/NavBar';
 
@@ -22,6 +23,7 @@ function App() {
         <Route path="/fitness-info" element={<FitnessInfoPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/personal-activity" element={<><NavBar /><PersonalActivity /></>} />
+        <Route path="/users/:userId" element={<><NavBar /><PublicProfilePage /></>} />
       </Routes>
     </Router>
   );

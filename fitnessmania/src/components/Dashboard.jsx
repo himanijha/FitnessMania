@@ -10,7 +10,7 @@ function Dashboard() {
     const [newComment, setNewComment] = useState();
     const [userData, setUserData] = useState(null);
     const [openNewPost, setOpenNewPost] = useState(false);
-    const [newPost, setNewPost] = useState({ title: '', content: '', startTime: '', endTime: '' });
+    const [newPost, setNewPost] = useState({ title: '', content: '', duration: '', activityType: '' });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [postError, setPostError] = useState('');
@@ -149,58 +149,70 @@ const handleImageChange = (e) => {
 };
 
 const handleCreatePost = async () => {
-    if (!userData) {
-        console.error('User data not loaded yet.');
-        return;
-    }
-
-    // Validate required fields
-    if (!newPost.title.trim()) {
+    try {
+      // Validate required fields
+      if (!newPost.title.trim()) {
         setPostError('Please enter a title');
         return;
-    }
-    if (!newPost.content.trim()) {
+      }
+      if (!newPost.content.trim()) {
         setPostError('Please enter a description');
         return;
-    }
-    if (!newPost.startTime.trim()) {
-        setPostError('Please enter a start time');
+      }
+      if (!newPost.duration.trim()) {
+        setPostError('Please enter the workout duration');
         return;
-    }
-    if (!newPost.endTime.trim()) {
-        setPostError('Please enter an end time');
+      }
+      if (!newPost.activityType) {
+        setPostError('Please select an activity type');
         return;
-    }
+      }
 
-    try {
-        const formData = new FormData();
-        formData.append('username', userData.username);
-        formData.append('title', newPost.title);
-        formData.append('description', newPost.content);
-        formData.append('startTime', newPost.startTime);
-        formData.append('endTime', newPost.endTime);
-        if (imageFile) {
-            formData.append('image', imageFile);
-        }
-        const response = await fetch('http://localhost:3000/api/posts', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Basic ' + btoa('admin:password')
-            },
-            body: formData,
-        });
-        const savedPost = await response.json();
-        setPosts([savedPost, ...posts]);
-        setOpenNewPost(false);
-        setNewPost({ title: '', content: '', startTime: '', endTime: '' });
-        setImageFile(null);
-        setImagePreview(null);
-        setPostError(''); // Clear any previous errors
+      const formData = new FormData();
+      formData.append('username', userData.username);
+      formData.append('title', newPost.title);
+      formData.append('description', newPost.content);
+      formData.append('duration', newPost.duration);
+      formData.append('activityType', newPost.activityType);
+      formData.append('tags', newPost.activityType); // Use activityType as tags for backward compatibility
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const response = await fetch('http://localhost:3000/api/posts', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create post');
+      }
+
+      const savedPost = await response.json();
+      
+      // Add the new post to the beginning of the posts array
+      setPosts(prevPosts => [{
+        ...savedPost,
+        commentstate: true,
+        likes: savedPost.likes || [],
+        likeCount: savedPost.likeCount || 0,
+        comments: savedPost.comments || []
+      }, ...prevPosts]);
+
+      setOpenNewPost(false);
+      setNewPost({ title: '', content: '', duration: '', activityType: '' });
+      setImageFile(null);
+      setImagePreview(null);
+      setPostError('');
     } catch (error) {
-        console.error('Error creating post:', error);
-        setPostError('Failed to create post. Please try again.');
+      console.error('Error creating post:', error);
+      setPostError('Failed to create post. Please try again.');
     }
-};
+  };
 
     const handleTagSelect = (tag) => {
       const url = tag ? `http://localhost:3000/api/posts/${tag}` : 'http://localhost:3000/api/posts';
@@ -212,6 +224,24 @@ const handleCreatePost = async () => {
         .then(response => response.json())
         .then(posts => setPosts(posts))
         .catch(error => console.error('Error fetching posts:', error));
+    };
+
+    const handleUsernameClick = async (username) => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/users?username=${encodeURIComponent(username)}`, {
+          headers: {
+            'Authorization': 'Basic ' + btoa('admin:password')
+          }
+        });
+        const users = await response.json();
+        if (Array.isArray(users) && users.length > 0) {
+          navigate(`/users/${users[0]._id}`);
+        } else {
+          alert('User not found');
+        }
+      } catch (err) {
+        alert('Error fetching user info');
+      }
     };
 
     if (loading) {
@@ -366,7 +396,7 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Run
+                        Running
                     </button>
                     <button 
                         className="tag-button"
@@ -385,7 +415,7 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Bike
+                        Biking
                     </button>
                     <button 
                         className="tag-button"
@@ -423,11 +453,11 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Swim
+                        Swimming
                     </button>
                     <button 
                         className="tag-button"
-                        onClick={() => handleTagSelect('Weights')}
+                        onClick={() => handleTagSelect('Weight Lifting')}
                         style={{
                             padding: '0.5rem 1.5rem',
                             borderRadius: '20px',
@@ -470,71 +500,41 @@ const handleCreatePost = async () => {
                     gap: '20px'
                 }}>
                     {posts.map((post, index) => (
-                        <div key={index} className="post-container" style={{
-                            backgroundColor: 'white',
-                            borderRadius: '8px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            overflow: 'hidden'
-                        }}> 
-                            <div style={{
-                                padding: '12px 16px',
-                                borderBottom: '1px solid #efefef'
-                            }}>
-                                <div className="username" style={{
-                                    fontWeight: '600',
-                                    fontSize: '14px'
-                                }}>{post.username}</div>
-                            </div>
-                            {post.imageUrl ? (
-                                <div style={{
-                                    width: '100%',
-                                    position: 'relative',
-                                    paddingTop: '100%' // Creates a square aspect ratio
-                                }}>
-                                    <img 
-                                        src={post.imageUrl} 
-                                        alt="Post" 
-                                        style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'contain',
-                                            backgroundColor: '#fafafa'
-                                        }}
-                                    />
+                        <div key={post._id} className="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
+                            <div className="p-4">
+                                <div className="flex items-center mb-4">
+                                    <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden mr-3">
+                                        {post.profileImageUrl ? (
+                                            <img 
+                                                src={post.profileImageUrl} 
+                                                alt={post.username} 
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-gray-300">
+                                                <i className="fas fa-user text-gray-500"></i>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold">{post.username}</h3>
+                                        <div className="flex items-center text-gray-500 text-sm">
+                                            <i className="far fa-clock mr-2"></i>
+                                            {new Date(post.createdAt).toLocaleDateString()} • {post.duration}
+                                        </div>
+                                    </div>
                                 </div>
-                            ) : (
-                                <div style={{
-                                    width: '100%',
-                                    paddingTop: '100%',
-                                    background: '#fafafa',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#888',
-                                    fontSize: '1rem'
-                                }}>
-                                    No image
-                                </div>
-                            )}
-                            <div style={{
-                                padding: '12px 16px'
-                            }}>
-                                <div className="description" style={{
-                                    marginBottom: '8px',
-                                    fontSize: '14px'
-                                }}>{post.description}</div>
-                                <div className="time" style={{
-                                    color: '#8e8e8e',
-                                    fontSize: '12px',
-                                    marginBottom: '8px'
-                                }}> 
-                                    <div className="start-time">{post.startTime}</div>
-                                    <div> - </div>
-                                    <div className="end-time">{post.endTime}</div>
-                                </div>
+                                <h4 className="text-xl font-semibold mb-2">{post.title}</h4>
+                                <p className="text-gray-700 mb-4">{post.description || post.content}</p>
+                                {post.imageUrl && (
+                                    <div className="relative pb-[100%] mb-4">
+                                        <img 
+                                            src={post.imageUrl} 
+                                            alt="Post" 
+                                            className="absolute inset-0 w-full h-full object-contain"
+                                        />
+                                    </div>
+                                )}
                                 <div className="like-container" style={{
                                     borderTop: '1px solid #efefef',
                                     paddingTop: '8px'
@@ -552,10 +552,13 @@ const handleCreatePost = async () => {
                                                 marginBottom: '4px',
                                                 fontSize: '14px'
                                             }}>
-                                                <span className="comment-username" style={{
-                                                    fontWeight: '600',
-                                                    marginRight: '4px'
-                                                }}>{comment.username}</span>
+                                                <span
+                                                    className="comment-username text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                                                    style={{ fontWeight: '600', marginRight: '4px' }}
+                                                    onClick={() => handleUsernameClick(comment.username)}
+                                                >
+                                                    {comment.username}
+                                                </span>
                                                 <span className="comment-text">{comment.text}</span>
                                             </div>
                                         ))}
@@ -620,7 +623,7 @@ const handleCreatePost = async () => {
                     value={newPost.title}
                     onChange={(e) => {
                         setNewPost({ ...newPost, title: e.target.value });
-                        setPostError(''); // Clear error when user types
+                        setPostError('');
                     }}
                   />
                   <textarea
@@ -629,29 +632,34 @@ const handleCreatePost = async () => {
                     value={newPost.content}
                     onChange={(e) => {
                         setNewPost({ ...newPost, content: e.target.value });
-                        setPostError(''); // Clear error when user types
+                        setPostError('');
                     }}
                   />
                   <input
                     type="text"
-                    placeholder="Start Time (e.g., 9:00 AM)"
+                    placeholder="Workout Duration (e.g., 45 minutes)"
                     className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={newPost.startTime}
+                    value={newPost.duration}
                     onChange={(e) => {
-                        setNewPost({ ...newPost, startTime: e.target.value });
-                        setPostError(''); // Clear error when user types
+                        setNewPost({ ...newPost, duration: e.target.value });
+                        setPostError('');
                     }}
                   />
-                  <input
-                    type="text"
-                    placeholder="End Time (e.g., 10:00 AM)"
+                  <select
                     className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={newPost.endTime}
+                    value={newPost.activityType}
                     onChange={(e) => {
-                        setNewPost({ ...newPost, endTime: e.target.value });
-                        setPostError(''); // Clear error when user types
+                        setNewPost({ ...newPost, activityType: e.target.value });
+                        setPostError('');
                     }}
-                  />
+                  >
+                    <option value="">Select Activity Type</option>
+                    <option value="Run">Running</option>
+                    <option value="Bike">Biking</option>
+                    <option value="Swim">Swimming</option>
+                    <option value="Yoga">Yoga</option>
+                    <option value="Weight Lifting">Weight Lifting</option>
+                  </select>
                   <input
                     type="file"
                     accept="image/*"
@@ -667,7 +675,7 @@ const handleCreatePost = async () => {
                           setOpenNewPost(false); 
                           setImageFile(null); 
                           setImagePreview(null);
-                          setPostError(''); // Clear error when closing
+                          setPostError('');
                       }}
                       className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
                     >
