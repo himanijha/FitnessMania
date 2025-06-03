@@ -203,7 +203,8 @@ const handleCreatePost = async () => {
 };
 
     const handleTagSelect = (tag) => {
-      fetch(`http://localhost:3000/api/posts/${tag}`, {
+      const url = tag ? `http://localhost:3000/api/posts/${tag}` : 'http://localhost:3000/api/posts';
+      fetch(url, {
         headers: {
           'Authorization': 'Basic ' + btoa('admin:password')
         }
@@ -404,6 +405,63 @@ const handleCreatePost = async () => {
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
                         Yoga
+                    </button>
+                    <button 
+                        className="tag-button"
+                        onClick={() => handleTagSelect('Swim')}
+                        style={{
+                            padding: '0.5rem 1.5rem',
+                            borderRadius: '20px',
+                            border: 'none',
+                            backgroundColor: '#3C82F6',
+                            color: 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            fontWeight: '500',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
+                    >
+                        Swim
+                    </button>
+                    <button 
+                        className="tag-button"
+                        onClick={() => handleTagSelect('Weights')}
+                        style={{
+                            padding: '0.5rem 1.5rem',
+                            borderRadius: '20px',
+                            border: 'none',
+                            backgroundColor: '#3C82F6',
+                            color: 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            fontWeight: '500',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
+                    >
+                        Weight Lifting
+                    </button>
+                    <button 
+                        className="tag-button"
+                        onClick={() => handleTagSelect(null)}
+                        style={{
+                            padding: '0.5rem 1.5rem',
+                            borderRadius: '20px',
+                            border: 'none',
+                            backgroundColor: '#194385',
+                            color: 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            fontWeight: '500',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#0B1F3D'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#194385'}
+                    >
+                        All Posts
                     </button>
                 </div>
                 <div className="feed-box" style={{
