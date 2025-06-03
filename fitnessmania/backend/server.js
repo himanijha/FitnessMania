@@ -117,7 +117,7 @@ mongoose.connect(process.env.MONGODB_URI)
   app.get('/api/posts/:tag', async (req, res) => {
     try {
       const { tag } = req.params;
-      const posts = await Post.find({ tag: tag });
+      const posts = await Post.find({ activityType: tag });
       console.log(`Posts found for tag ${tag}:`, posts.length);
       res.json(posts);
     } catch (error) {
@@ -128,7 +128,7 @@ mongoose.connect(process.env.MONGODB_URI)
 // Handle creating a new post
   app.post('/api/posts', upload.single('image'), async (req, res) => {
     try {
-      const { username, title, description, duration } = req.body;
+      const { username, title, description, duration, activityType } = req.body;
       const imageUrl = req.file ? req.file.path : null; // Get the Cloudinary URL from the uploaded file
 
       const newPost = new Post({
@@ -136,7 +136,9 @@ mongoose.connect(process.env.MONGODB_URI)
         title,
         description,
         duration,
+        activityType,
         imageUrl,
+        tags: activityType,
         createdAt: new Date()
       });
 
