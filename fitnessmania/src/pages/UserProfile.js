@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 function prettify(str) {
   if (!str) return '';
@@ -282,6 +282,25 @@ function UserProfile() {
     }
   };
 
+  // Function to handle username click
+  const handleUsernameClick = async (username) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/users?username=${encodeURIComponent(username)}`, {
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        }
+      });
+      const users = await response.json();
+      if (Array.isArray(users) && users.length > 0) {
+        navigate(`/users/${users[0]._id}`);
+      } else {
+        alert('User not found');
+      }
+    } catch (err) {
+      alert('Error fetching user info');
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -419,6 +438,14 @@ function UserProfile() {
                 {posts.map((post, index) => (
                   <div key={post._id} className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
+                    <div className="flex items-center mb-2">
+                      <span
+                        className="text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                        onClick={() => handleUsernameClick(post.username)}
+                      >
+                        {post.username}
+                      </span>
+                    </div>
                     <p className="text-gray-700 mb-4">{post.content}</p>
                     {post.imageUrl && (
                       <img src={post.imageUrl} alt="Post" className="mb-4 max-h-60 rounded-lg mx-auto" />
@@ -445,7 +472,13 @@ function UserProfile() {
                       <div className="comment-container mt-4 bg-gray-100 p-4 rounded-lg">
                         {post.comments.map((comment, commentIndex) => (
                           <div key={commentIndex} className="comment-box mb-2 flex items-start">
-                            <div className="comment-username font-bold mr-2 text-blue-600">{comment.username}:</div>
+                            <span
+                              className="comment-username text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                              style={{ fontWeight: '600', marginRight: '4px' }}
+                              onClick={() => handleUsernameClick(comment.username)}
+                            >
+                              {comment.username}
+                            </span>
                             <div className="comment-text text-gray-800">{comment.text}</div>
                           </div>
                         ))}

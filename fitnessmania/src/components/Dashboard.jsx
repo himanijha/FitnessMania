@@ -214,6 +214,24 @@ const handleCreatePost = async () => {
         .catch(error => console.error('Error fetching posts:', error));
     };
 
+    const handleUsernameClick = async (username) => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/users?username=${encodeURIComponent(username)}`, {
+          headers: {
+            'Authorization': 'Basic ' + btoa('admin:password')
+          }
+        });
+        const users = await response.json();
+        if (Array.isArray(users) && users.length > 0) {
+          navigate(`/users/${users[0]._id}`);
+        } else {
+          alert('User not found');
+        }
+      } catch (err) {
+        alert('Error fetching user info');
+      }
+    };
+
     if (loading) {
     return <div>Loading...</div>; // or a spinner
     }
@@ -480,10 +498,13 @@ const handleCreatePost = async () => {
                                 padding: '12px 16px',
                                 borderBottom: '1px solid #efefef'
                             }}>
-                                <div className="username" style={{
-                                    fontWeight: '600',
-                                    fontSize: '14px'
-                                }}>{post.username}</div>
+                                <span
+                                    className="username text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                                    style={{ fontWeight: '600', fontSize: '14px' }}
+                                    onClick={() => handleUsernameClick(post.username)}
+                                >
+                                    {post.username}
+                                </span>
                             </div>
                             {post.imageUrl ? (
                                 <div style={{
@@ -552,10 +573,13 @@ const handleCreatePost = async () => {
                                                 marginBottom: '4px',
                                                 fontSize: '14px'
                                             }}>
-                                                <span className="comment-username" style={{
-                                                    fontWeight: '600',
-                                                    marginRight: '4px'
-                                                }}>{comment.username}</span>
+                                                <span
+                                                    className="comment-username text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                                                    style={{ fontWeight: '600', marginRight: '4px' }}
+                                                    onClick={() => handleUsernameClick(comment.username)}
+                                                >
+                                                    {comment.username}
+                                                </span>
                                                 <span className="comment-text">{comment.text}</span>
                                             </div>
                                         ))}
