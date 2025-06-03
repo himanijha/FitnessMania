@@ -128,15 +128,26 @@ mongoose.connect(process.env.MONGODB_URI)
   app.get('/api/posts/:tag/:userId', async (req, res) => {
     console.log("hit the route");
     try {
-      // Fetch the user by ID to get their username
       const { tag, userId } = req.params;
 
       const user = await User.findById(userId);
-      console.log("Finding ", tag, " ", user.username);
-      const posts = await Post.find({ tag: tag, username: user.username });
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
+
+      // Calculate the start of the current week (Sunday)
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Set to last Sunday
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      console.log("Finding ", tag, " ", user.username);
+      const posts = await Post.find({
+        tags: tag,
+        username: user.username,
+        createdAt: { $gte: startOfWeek }
+      });
+
       res.json(posts);
     } catch (error) {
       res.status(500).json({ error: error.message });
