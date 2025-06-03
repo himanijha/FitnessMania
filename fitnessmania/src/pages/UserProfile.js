@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from 'react-router-dom';
 
+function prettify(str) {
+  if (!str) return '';
+  return str
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function UserProfile() {
   const { userId, loading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
@@ -383,7 +390,7 @@ function UserProfile() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Gender</p>
-                    <p className="font-medium">{editedFitnessInfo.gender || user.gender || 'Not specified'}</p>
+                    <p className="font-medium">{prettify(editedFitnessInfo.gender) || prettify(user.gender) || 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Height</p>
@@ -395,7 +402,7 @@ function UserProfile() {
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm text-gray-600">Fitness Goal</p>
-                    <p className="font-medium">{editedFitnessInfo.fitness_goal || user.fitness_goal || 'Not specified'}</p>
+                    <p className="font-medium">{prettify(editedFitnessInfo.fitness_goal) || prettify(user.fitness_goal) || 'Not specified'}</p>
                   </div>
                 </div>
               </div>
