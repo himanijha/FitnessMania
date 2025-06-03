@@ -13,6 +13,7 @@ function Dashboard() {
     const [newPost, setNewPost] = useState({ title: '', content: '', startTime: '', endTime: '' });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
+    const [postError, setPostError] = useState('');
     
     
     useEffect(() => {
@@ -148,37 +149,57 @@ const handleImageChange = (e) => {
 };
 
 const handleCreatePost = async () => {
-  if (!userData) {
-    console.error('User data not loaded yet.');
-    return; // Prevent creating post if user data is not available
-  }
-  try {
-    const formData = new FormData();
-    formData.append('username', userData.username); // Use fetched username
-    formData.append('title', newPost.title);
-    formData.append('description', newPost.content);
-    formData.append('startTime', newPost.startTime || '');
-    formData.append('endTime', newPost.endTime || '');
-    if (imageFile) {
-      formData.append('image', imageFile);
+    if (!userData) {
+        console.error('User data not loaded yet.');
+        return;
     }
-    const response = await fetch('http://localhost:3000/api/posts', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + btoa('admin:password')
-      },
-      body: formData,
-    });
-    const savedPost = await response.json();
-    // Add the newly created post to the existing posts list
-    setPosts([savedPost, ...posts]);
-    setOpenNewPost(false);
-    setNewPost({ title: '', content: '', startTime: '', endTime: '' });
-    setImageFile(null);
-    setImagePreview(null);
-  } catch (error) {
-    console.error('Error creating post:', error);
-  }
+
+    // Validate required fields
+    if (!newPost.title.trim()) {
+        setPostError('Please enter a title');
+        return;
+    }
+    if (!newPost.content.trim()) {
+        setPostError('Please enter a description');
+        return;
+    }
+    if (!newPost.startTime.trim()) {
+        setPostError('Please enter a start time');
+        return;
+    }
+    if (!newPost.endTime.trim()) {
+        setPostError('Please enter an end time');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('username', userData.username);
+        formData.append('title', newPost.title);
+        formData.append('description', newPost.content);
+        formData.append('startTime', newPost.startTime);
+        formData.append('endTime', newPost.endTime);
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+        const response = await fetch('http://localhost:3000/api/posts', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + btoa('admin:password')
+            },
+            body: formData,
+        });
+        const savedPost = await response.json();
+        setPosts([savedPost, ...posts]);
+        setOpenNewPost(false);
+        setNewPost({ title: '', content: '', startTime: '', endTime: '' });
+        setImageFile(null);
+        setImagePreview(null);
+        setPostError(''); // Clear any previous errors
+    } catch (error) {
+        console.error('Error creating post:', error);
+        setPostError('Failed to create post. Please try again.');
+    }
 };
 
     const handleTagSelect = (tag) => {
@@ -202,7 +223,38 @@ const handleCreatePost = async () => {
             <div className = "main-container">
                 <div className = "my-profile-container">
                     <div className = "header-container">
-                        <div className = "my-image"></div>
+                        <div className = "my-image" style={{
+                            width: '60px',
+                            height: '60px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            backgroundColor: '#f0f0f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            {userData?.profileImageUrl ? (
+                                <img 
+                                    src={userData.profileImageUrl} 
+                                    alt="Profile" 
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}
+                                />
+                            ) : (
+                                <img 
+                                    src="https://www.shutterstock.com/image-vector/vector-flat-illustration-grayscale-avatar-600nw-2264922221.jpg"
+                                    alt="Default Profile"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}
+                                />
+                            )}
+                        </div>
                         <div className = "my-name">{userData ? userData.first_name + " " + userData.last_name: ""}</div>
                     </div>
                     <button 
@@ -498,32 +550,49 @@ const handleCreatePost = async () => {
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                 <div className="bg-white rounded-lg p-6 w-full max-w-lg">
                   <h2 className="text-2xl font-bold mb-4">Create New Post</h2>
+                  {postError && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                        {postError}
+                    </div>
+                  )}
                   <input
                     type="text"
                     placeholder="Title"
                     className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={newPost.title}
-                    onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                    onChange={(e) => {
+                        setNewPost({ ...newPost, title: e.target.value });
+                        setPostError(''); // Clear error when user types
+                    }}
                   />
                   <textarea
                     placeholder="Description"
                     className="w-full border rounded-lg p-2 mb-4 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={newPost.content}
-                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                    onChange={(e) => {
+                        setNewPost({ ...newPost, content: e.target.value });
+                        setPostError(''); // Clear error when user types
+                    }}
                   />
                   <input
                     type="text"
                     placeholder="Start Time (e.g., 9:00 AM)"
                     className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={newPost.startTime}
-                    onChange={(e) => setNewPost({ ...newPost, startTime: e.target.value })}
+                    onChange={(e) => {
+                        setNewPost({ ...newPost, startTime: e.target.value });
+                        setPostError(''); // Clear error when user types
+                    }}
                   />
                   <input
                     type="text"
                     placeholder="End Time (e.g., 10:00 AM)"
                     className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={newPost.endTime}
-                    onChange={(e) => setNewPost({ ...newPost, endTime: e.target.value })}
+                    onChange={(e) => {
+                        setNewPost({ ...newPost, endTime: e.target.value });
+                        setPostError(''); // Clear error when user types
+                    }}
                   />
                   <input
                     type="file"
@@ -536,7 +605,12 @@ const handleCreatePost = async () => {
                   )}
                   <div className="flex justify-end space-x-2">
                     <button
-                      onClick={() => { setOpenNewPost(false); setImageFile(null); setImagePreview(null); }}
+                      onClick={() => { 
+                          setOpenNewPost(false); 
+                          setImageFile(null); 
+                          setImagePreview(null);
+                          setPostError(''); // Clear error when closing
+                      }}
                       className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
                     >
                       Cancel

@@ -24,6 +24,7 @@ function UserProfile() {
     fitness_goal: ''
   });
   const [newComment, setNewComment] = useState('');
+  const [postError, setPostError] = useState('');
 
   useEffect(() => {
     if (!userId) {
@@ -82,12 +83,30 @@ function UserProfile() {
 
   const handleCreatePost = async () => {
     try {
+      // Validate required fields
+      if (!newPost.title.trim()) {
+        setPostError('Please enter a title');
+        return;
+      }
+      if (!newPost.content.trim()) {
+        setPostError('Please enter a description');
+        return;
+      }
+      if (!newPost.startTime.trim()) {
+        setPostError('Please enter a start time');
+        return;
+      }
+      if (!newPost.endTime.trim()) {
+        setPostError('Please enter an end time');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
-      formData.append('startTime', newPost.startTime || '');
-      formData.append('endTime', newPost.endTime || '');
+      formData.append('startTime', newPost.startTime);
+      formData.append('endTime', newPost.endTime);
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -101,8 +120,10 @@ function UserProfile() {
       setNewPost({ title: '', content: '', startTime: '', endTime: '' });
       setImageFile(null);
       setImagePreview(null);
+      setPostError(''); // Clear any previous errors
     } catch (error) {
       console.error('Error creating post:', error);
+      setPostError('Failed to create post. Please try again.');
     }
   };
 
@@ -451,34 +472,49 @@ function UserProfile() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg">
             <h2 className="text-2xl font-bold mb-4">Create New Post</h2>
+            {postError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {postError}
+              </div>
+            )}
             <input
               type="text"
               placeholder="Title"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.title}
-              onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+              onChange={(e) => {
+                setNewPost({ ...newPost, title: e.target.value });
+                setPostError(''); // Clear error when user types
+              }}
             />
             <textarea
               placeholder="Description"
               className="w-full border rounded-lg p-2 mb-4 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.content}
-              onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+              onChange={(e) => {
+                setNewPost({ ...newPost, content: e.target.value });
+                setPostError(''); // Clear error when user types
+              }}
             />
-            {/* Add Start Time Input */}
             <input
               type="text"
               placeholder="Start Time (e.g., 9:00 AM)"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.startTime}
-              onChange={(e) => setNewPost({ ...newPost, startTime: e.target.value })}
+              onChange={(e) => {
+                setNewPost({ ...newPost, startTime: e.target.value });
+                setPostError(''); // Clear error when user types
+              }}
             />
-            {/* Add End Time Input */}
             <input
               type="text"
               placeholder="End Time (e.g., 10:00 AM)"
               className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={newPost.endTime}
-              onChange={(e) => setNewPost({ ...newPost, endTime: e.target.value })}
+              onChange={(e) => {
+                setNewPost({ ...newPost, endTime: e.target.value });
+                setPostError(''); // Clear error when user types
+              }}
             />
             <input
               type="file"
@@ -491,7 +527,12 @@ function UserProfile() {
             )}
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => { setOpenNewPost(false); setImageFile(null); setImagePreview(null); }}
+                onClick={() => { 
+                  setOpenNewPost(false); 
+                  setImageFile(null); 
+                  setImagePreview(null);
+                  setPostError(''); // Clear error when closing
+                }}
                 className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
               >
                 Cancel
