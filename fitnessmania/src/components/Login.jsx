@@ -17,7 +17,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/signin', {
+      const response = await fetch('http://localhost:3000/api/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

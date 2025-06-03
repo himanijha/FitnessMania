@@ -10,7 +10,7 @@ function prettify(str) {
 }
 
 function UserProfile() {
-  const { userId, loading: authLoading } = useAuth();
+  const { userId, loading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -417,9 +417,18 @@ function UserProfile() {
                     fitness_goal: userData.fitness_goal || ''
                   });
                 }}
-                className="w-full bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors mb-6"
+                className="w-full bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors mb-4"
               >
                 Edit Profile
+              </button>
+              <button 
+                onClick={() => {
+                  logout();
+                  navigate('/');
+                }}
+                className="w-full bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Log Out
               </button>
             </div>
           </div>
