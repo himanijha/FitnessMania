@@ -220,6 +220,24 @@ const handleCreatePost = async () => {
         .catch(error => console.error('Error fetching posts:', error));
     };
 
+    const handleUsernameClick = async (username) => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/users?username=${encodeURIComponent(username)}`, {
+          headers: {
+            'Authorization': 'Basic ' + btoa('admin:password')
+          }
+        });
+        const users = await response.json();
+        if (Array.isArray(users) && users.length > 0) {
+          navigate(`/users/${users[0]._id}`);
+        } else {
+          alert('User not found');
+        }
+      } catch (err) {
+        alert('Error fetching user info');
+      }
+    };
+
     if (loading) {
     return <div>Loading...</div>; // or a spinner
     }
@@ -476,28 +494,73 @@ const handleCreatePost = async () => {
                     gap: '20px'
                 }}>
                     {posts.map((post, index) => (
-                        <div key={post._id} className="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
-                            <div className="p-4">
-                                <div className="flex items-center mb-4">
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden mr-3">
-                                        {post.profileImageUrl ? (
-                                            <img 
-                                                src={post.profileImageUrl} 
-                                                alt={post.username} 
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gray-300">
-                                                <i className="fas fa-user text-gray-500"></i>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold">{post.username}</h3>
-                                        <div className="flex items-center text-gray-500 text-sm">
-                                            <i className="far fa-clock mr-2"></i>
-                                            {new Date(post.createdAt).toLocaleDateString()} • {post.duration}
-                                        </div>
+                        <div key={index} className="post-container" style={{
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            overflow: 'hidden'
+                        }}> 
+                            <div style={{
+                                padding: '12px 16px',
+                                borderBottom: '1px solid #efefef'
+                            }}>
+                                <span
+                                    className="username text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                                    style={{ fontWeight: '600', fontSize: '14px' }}
+                                    onClick={() => handleUsernameClick(post.username)}
+                                >
+                                    {post.username}
+                                </span>
+                            </div>
+                            {post.imageUrl ? (
+                                <div style={{
+                                    width: '100%',
+                                    position: 'relative',
+                                    paddingTop: '100%' // Creates a square aspect ratio
+                                }}>
+                                    <img 
+                                        src={post.imageUrl} 
+                                        alt="Post" 
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'contain',
+                                            backgroundColor: '#fafafa'
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div style={{
+                                    width: '100%',
+                                    paddingTop: '100%',
+                                    background: '#fafafa',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#888',
+                                    fontSize: '1rem'
+                                }}>
+                                    No image
+                                </div>
+                            )}
+                            <div style={{
+                                padding: '12px 16px'
+                            }}>
+                                <div className="description" style={{
+                                    marginBottom: '8px',
+                                    fontSize: '14px'
+                                }}>{post.description}</div>
+                                <div className="time" style={{
+                                    color: '#8e8e8e',
+                                    fontSize: '12px',
+                                    marginBottom: '8px'
+                                }}> 
+                                    <div className="flex items-center text-gray-500 text-sm">
+                                      <i className="far fa-clock mr-2"></i>
+                                      {new Date(post.createdAt).toLocaleDateString()} • {post.duration}
                                     </div>
                                 </div>
                                 <h4 className="text-xl font-semibold mb-2">{post.title}</h4>
@@ -528,10 +591,13 @@ const handleCreatePost = async () => {
                                                 marginBottom: '4px',
                                                 fontSize: '14px'
                                             }}>
-                                                <span className="comment-username" style={{
-                                                    fontWeight: '600',
-                                                    marginRight: '4px'
-                                                }}>{comment.username}</span>
+                                                <span
+                                                    className="comment-username text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                                                    style={{ fontWeight: '600', marginRight: '4px' }}
+                                                    onClick={() => handleUsernameClick(comment.username)}
+                                                >
+                                                    {comment.username}
+                                                </span>
                                                 <span className="comment-text">{comment.text}</span>
                                             </div>
                                         ))}

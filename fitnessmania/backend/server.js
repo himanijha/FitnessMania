@@ -85,10 +85,16 @@ mongoose.connect(process.env.MONGODB_URI)
     }
   });
 
-  // Fetch all users
+  // Fetch all users or by username
   app.get('/api/users', async (req, res) => {
     try {
-      const users = await User.find();
+      const { username } = req.query;
+      let users;
+      if (username) {
+        users = await User.find({ username: username }); // exact match
+      } else {
+        users = await User.find();
+      }
       res.json(users);
     } catch (error) {
       res.status(500).json({ error: error.message });
