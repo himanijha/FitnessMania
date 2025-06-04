@@ -10,7 +10,7 @@ function prettify(str) {
 }
 
 function UserProfile() {
-  const { userId, loading: authLoading } = useAuth();
+  const { userId, loading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -403,24 +403,35 @@ function UserProfile() {
                 </div>
               </div>
 
-              <button 
-                onClick={() => { 
-                  setOpenEditProfile(true);
-                  setEditedUsername(userData.username || ''); 
-                  setEditImageFile(null);
-                  setEditImagePreview(userData.profileImageUrl || '/path-to-user-avatar.jpg');
-                  setEditedFitnessInfo({
-                    age: userData.age || '',
-                    gender: userData.gender || '',
-                    height: userData.height || '',
-                    weight: userData.weight || '',
-                    fitness_goal: userData.fitness_goal || ''
-                  });
-                }}
-                className="w-full bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors mb-6"
-              >
-                Edit Profile
-              </button>
+              <div className="flex flex-col space-y-2">
+                <button
+                  onClick={() => { 
+                    setOpenEditProfile(true);
+                    setEditedUsername(userData.username || ''); 
+                    setEditImageFile(null);
+                    setEditImagePreview(userData.profileImageUrl || '/path-to-user-avatar.jpg');
+                    setEditedFitnessInfo({
+                      age: userData.age || '',
+                      gender: userData.gender || '',
+                      height: userData.height || '',
+                      weight: userData.weight || '',
+                      fitness_goal: userData.fitness_goal || ''
+                    });
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    navigate('/');
+                  }}
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>

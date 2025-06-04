@@ -113,7 +113,7 @@ mongoose.connect(process.env.MONGODB_URI)
   app.get('/api/posts', async (req, res) => {
     console.log("Found it")
     try {
-      const posts = await Post.find();
+      const posts = await Post.find().sort({ createdAt: -1 }); // Sort by newest first
       console.log("Posts found:", posts.length);
       res.json(posts);
     } catch (error) {
@@ -125,7 +125,7 @@ mongoose.connect(process.env.MONGODB_URI)
   app.get('/api/posts/:tag', async (req, res) => {
     try {
       const { tag } = req.params;
-      const posts = await Post.find({ activityType: tag });
+      const posts = await Post.find({ activityType: tag }).sort({ createdAt: -1 }); // Sort by newest first
       console.log(`Posts found for tag ${tag}:`, posts.length);
       res.json(posts);
     } catch (error) {
