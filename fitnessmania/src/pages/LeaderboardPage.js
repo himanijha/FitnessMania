@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Leaderboard.css';
+import { useAuth } from '../contexts/AuthContext'; // Import the useAuth hook
 
 export default function LeaderboardPage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -11,6 +14,9 @@ export default function LeaderboardPage() {
     topScore: 0
   });
   const [showChallengeModal, setShowChallengeModal] = useState(false);
+
+  // Get the current user's ID and authentication loading state
+  const { userId, loading: authLoading } = useAuth();
 
   const enhanceUserData = (userData) => {
     return userData.map(user => ({
@@ -57,7 +63,17 @@ export default function LeaderboardPage() {
     setShowChallengeModal(false);
   };
 
+  const handleAcceptChallenge = () => {
+    setShowChallengeModal(false);
+    navigate('/dashboard');
+  };
+
   useEffect(() => {
+    // Wait until authentication status is resolved
+    if (authLoading) {
+      return;
+    }
+
     fetch('http://localhost:3000/api/users', {
       headers: {
         'Authorization': 'Basic ' + btoa('admin:password')
@@ -75,7 +91,7 @@ export default function LeaderboardPage() {
         setUsers([]);
         setStats({ totalUsers: 0, avgScore: 0, topScore: 0 });
       });
-  }, []);
+  }, [authLoading]); // Re-run effect when authLoading changes
 
   const calculateStats = (userData) => {
     const totalUsers = userData.length;
@@ -136,6 +152,15 @@ export default function LeaderboardPage() {
     });
   };
 
+  // Display loading indicator if authentication is still in progress
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
@@ -179,9 +204,10 @@ export default function LeaderboardPage() {
                   const medal = getMedalIcon(rank);
                   
                   return (
+                    // Highlight the current user's row
                     <div 
                       key={user._id}
-                      className="p-6 hover:bg-gray-50 cursor-pointer transition-colors"
+                      className={`p-6 hover:bg-gray-50 cursor-pointer transition-colors ${user._id === userId ? 'bg-blue-100 font-semibold' : ''}`}
                       onClick={() => openUserModal(user)}
                     >
                       <div className="flex items-center justify-between">
@@ -198,7 +224,12 @@ export default function LeaderboardPage() {
                           </div>
 
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-800">{user.username}</h3>
+                            <h3 className="text-lg font-semibold text-gray-800">{user.username}
+                            {/* Add a "You" badge for the current user */}
+                            {user._id === userId && (
+                              <span className="ml-2 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">You</span>
+                            )}
+                            </h3>
                             <p className="text-gray-600">Level {user.level}</p>
                           </div>
                         </div>
@@ -385,7 +416,7 @@ export default function LeaderboardPage() {
                     Close
                   </button>
                   <button 
-                    onClick={closeChallengeModal}
+                    onClick={handleAcceptChallenge}
                     className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Accept Challenge
