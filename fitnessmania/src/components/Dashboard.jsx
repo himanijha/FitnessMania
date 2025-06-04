@@ -592,7 +592,12 @@ const handleCreatePost = async () => {
                                         )}
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold">{post.username}</h3>
+                                        <span
+                                            className="font-semibold text-blue-600 hover:underline cursor-pointer"
+                                            onClick={() => handleUsernameClick(post.username)}
+                                        >
+                                            {post.username}
+                                        </span>
                                         <div className="flex items-center text-gray-500 text-sm">
                                             <i className="far fa-clock mr-2"></i>
                                             {new Date(post.createdAt).toLocaleDateString()} • {post.duration}

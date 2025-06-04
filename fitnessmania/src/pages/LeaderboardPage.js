@@ -80,6 +80,24 @@ export default function LeaderboardPage() {
     navigate('/dashboard');
   };
 
+  const handleUsernameClick = async (username) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/users?username=${encodeURIComponent(username)}`, {
+        headers: {
+          'Authorization': 'Basic ' + btoa('admin:password')
+        }
+      });
+      const users = await response.json();
+      if (Array.isArray(users) && users.length > 0) {
+        navigate(`/users/${users[0]._id}`);
+      } else {
+        alert('User not found');
+      }
+    } catch (err) {
+      alert('Error fetching user info');
+    }
+  };
+
   useEffect(() => {
     // Wait until authentication status is resolved
     if (authLoading) {
@@ -320,12 +338,12 @@ export default function LeaderboardPage() {
                             </div>
 
                             <div className="flex-grow">
-                              <h3 className="text-lg font-semibold text-gray-800">{user.username}
-                                {/* Add a "You" badge for the current user */}
-                                {user._id === userId && (
-                                  <span className="ml-2 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">You</span>
-                                )}
-                              </h3>
+                              <span
+                                className="text-lg font-semibold text-blue-600 hover:underline cursor-pointer"
+                                onClick={e => { e.stopPropagation(); handleUsernameClick(user.username); }}
+                              >
+                                {user.username}
+                              </span>
                               {/* Display post creation time */}
                               <p className="text-gray-600">Completed at {new Date(user.postCreationTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
