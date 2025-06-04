@@ -10,7 +10,7 @@ function Dashboard() {
     const [newComment, setNewComment] = useState();
     const [userData, setUserData] = useState(null);
     const [openNewPost, setOpenNewPost] = useState(false);
-    const [newPost, setNewPost] = useState({ title: '', content: '', duration: '' });
+    const [newPost, setNewPost] = useState({ title: '', content: '', duration: '', activityType: '' });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [postError, setPostError] = useState('');
@@ -62,28 +62,72 @@ function Dashboard() {
     });
 };
 
-  const setLikeState = (index) => {
-    const post = posts[index]; // get logged-in userId from your context or props
+  const setLikeState = async (index) => {
+    if (!userData || !userData._id) {
+      console.error('User data not available for liking.');
+      return;
+    }
 
-  fetch(`http://localhost:3000/api/posts/${post._id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Basic ' + btoa('admin:password'),
-    },
-    body: JSON.stringify({ userId }),
-  })
-    .then((res) => {
-      if (!res.ok) throw new Error('Failed to toggle like');
-      return res.json();
-    })
-    .then((updatedPost) => {
+    const post = posts[index];
+    const userId = userData._id;
+    console.log('Current post state:', post);
+    console.log('User ID:', userId);
+
+    // Optimistically update the state
+    setPosts((prevPosts) =>
+      prevPosts.map((p, i) =>
+        i === index ? {
+          ...p,
+          likes: p.likes?.includes(userId) 
+            ? p.likes.filter(id => id !== userId)
+            : [...(p.likes || []), userId],
+          likeCount: p.likes?.includes(userId) 
+            ? (p.likeCount || 0) - 1 
+            : (p.likeCount || 0) + 1
+        } : p
+      )
+    );
+
+    // Send the update to the backend
+    try {
+      const postId = post._id;
+      console.log('Sending like update for post:', postId);
+      const response = await fetch(`http://localhost:3000/api/posts/${postId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa('admin:password')
+        },
+        body: JSON.stringify({ userId: userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update like status');
+      }
+
+      const updatedPost = await response.json();
+      console.log('Received updated post from backend:', updatedPost);
+      
+      // Update the state with the response from the backend
       setPosts((prevPosts) =>
-        prevPosts.map((p) => (p._id === updatedPost._id ? updatedPost : p))
+        prevPosts.map((p, i) =>
+          i === index ? {
+            ...p,
+            ...updatedPost,  // Spread the entire updated post
+            likes: updatedPost.likes || [],
+            likeCount: updatedPost.likeCount || 0
+          } : p
+        )
       );
-    })
-    .catch((error) => console.error('Error updating post:', error));
-};
+
+    } catch (error) {
+      console.error('Error updating like status:', error);
+      // Revert optimistic update on error
+      setPosts((prevPosts) =>
+        prevPosts.map((p, i) => (i === index ? post : p))
+      );
+    }
+  };
 
 const handleCommentChange = (e) => {
     setNewComment(e.target.value);
@@ -163,12 +207,18 @@ const handleCreatePost = async () => {
         setPostError('Please enter the workout duration');
         return;
       }
+      if (!newPost.activityType) {
+        setPostError('Please select an activity type');
+        return;
+      }
 
       const formData = new FormData();
       formData.append('username', userData.username);
       formData.append('title', newPost.title);
       formData.append('description', newPost.content);
       formData.append('duration', newPost.duration);
+      formData.append('activityType', newPost.activityType);
+      formData.append('tags', newPost.activityType); // Use activityType as tags for backward compatibility
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -198,7 +248,7 @@ const handleCreatePost = async () => {
       }, ...prevPosts]);
 
       setOpenNewPost(false);
-      setNewPost({ title: '', content: '', duration: '' });
+      setNewPost({ title: '', content: '', duration: '', activityType: '' });
       setImageFile(null);
       setImagePreview(null);
       setPostError('');
@@ -218,6 +268,24 @@ const handleCreatePost = async () => {
         .then(response => response.json())
         .then(posts => setPosts(posts))
         .catch(error => console.error('Error fetching posts:', error));
+    };
+
+    const handleUsernameClick = async (username) => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/users?username=${encodeURIComponent(username)}`, {
+          headers: {
+            'Authorization': 'Basic ' + btoa('admin:password')
+          }
+        });
+        const users = await response.json();
+        if (Array.isArray(users) && users.length > 0) {
+          navigate(`/users/${users[0]._id}`);
+        } else {
+          alert('User not found');
+        }
+      } catch (err) {
+        alert('Error fetching user info');
+      }
     };
 
     if (loading) {
@@ -372,7 +440,7 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Run
+                        Running
                     </button>
                     <button 
                         className="tag-button"
@@ -391,7 +459,7 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Bike
+                        Biking
                     </button>
                     <button 
                         className="tag-button"
@@ -429,11 +497,11 @@ const handleCreatePost = async () => {
                         onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
                         onMouseOut={(e) => e.target.style.backgroundColor = '#3C82F6'}
                     >
-                        Swim
+                        Swimming
                     </button>
                     <button 
                         className="tag-button"
-                        onClick={() => handleTagSelect('Weights')}
+                        onClick={() => handleTagSelect('Weight Lifting')}
                         style={{
                             padding: '0.5rem 1.5rem',
                             borderRadius: '20px',
@@ -528,10 +596,13 @@ const handleCreatePost = async () => {
                                                 marginBottom: '4px',
                                                 fontSize: '14px'
                                             }}>
-                                                <span className="comment-username" style={{
-                                                    fontWeight: '600',
-                                                    marginRight: '4px'
-                                                }}>{comment.username}</span>
+                                                <span
+                                                    className="comment-username text-blue-600 hover:underline font-bold mr-2 cursor-pointer"
+                                                    style={{ fontWeight: '600', marginRight: '4px' }}
+                                                    onClick={() => handleUsernameClick(comment.username)}
+                                                >
+                                                    {comment.username}
+                                                </span>
                                                 <span className="comment-text">{comment.text}</span>
                                             </div>
                                         ))}
@@ -618,6 +689,21 @@ const handleCreatePost = async () => {
                         setPostError('');
                     }}
                   />
+                  <select
+                    className="w-full border rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={newPost.activityType}
+                    onChange={(e) => {
+                        setNewPost({ ...newPost, activityType: e.target.value });
+                        setPostError('');
+                    }}
+                  >
+                    <option value="">Select Activity Type</option>
+                    <option value="Run">Running</option>
+                    <option value="Bike">Biking</option>
+                    <option value="Swim">Swimming</option>
+                    <option value="Yoga">Yoga</option>
+                    <option value="Weight Lifting">Weight Lifting</option>
+                  </select>
                   <input
                     type="file"
                     accept="image/*"

@@ -93,10 +93,16 @@ mongoose.connect(process.env.MONGODB_URI)
     }
   });
 
-  // Fetch all users
+  // Fetch all users or by username
   app.get('/api/users', async (req, res) => {
     try {
-      const users = await User.find();
+      const { username } = req.query;
+      let users;
+      if (username) {
+        users = await User.find({ username: username }); // exact match
+      } else {
+        users = await User.find();
+      }
       res.json(users);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -119,8 +125,40 @@ mongoose.connect(process.env.MONGODB_URI)
   app.get('/api/posts/:tag', async (req, res) => {
     try {
       const { tag } = req.params;
-      const posts = await Post.find({ tag: tag });
+      const posts = await Post.find({ activityType: tag });
       console.log(`Posts found for tag ${tag}:`, posts.length);
+      res.json(posts);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/posts/:tag/:userId', async (req, res) => {
+    console.log("hit the route");
+    try {
+      const { tag, userId } = req.params;
+
+      const user = await User.findById(userId);
+      // console.log("Finding ", tag, " ", user.username);
+      // const posts = await Post.find({ tags: tag, username: user.username });
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Calculate the start of the current week (Sunday)
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Set to last Sunday
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      console.log("Finding ", tag, " ", user.username);
+      const posts = await Post.find({
+        tags: tag,
+        username: user.username,
+        createdAt: { $gte: startOfWeek }
+      });
+
       res.json(posts);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -130,7 +168,7 @@ mongoose.connect(process.env.MONGODB_URI)
 // Handle creating a new post
   app.post('/api/posts', upload.single('image'), async (req, res) => {
     try {
-      const { username, title, description, duration } = req.body;
+      const { username, title, description, duration, activityType } = req.body;
       const imageUrl = req.file ? req.file.path : null; // Get the Cloudinary URL from the uploaded file
 
       const newPost = new Post({
@@ -138,7 +176,9 @@ mongoose.connect(process.env.MONGODB_URI)
         title,
         description,
         duration,
+        activityType,
         imageUrl,
+        tags: activityType,
         createdAt: new Date()
       });
 
@@ -177,20 +217,58 @@ mongoose.connect(process.env.MONGODB_URI)
           post.likes.splice(userLikedIndex, 1);
           post.likeCount = Math.max(0, (post.likeCount || 0) - 1); // Ensure likeCount doesn't go below 0
         }
-        // Remove userId from updates so it's not attempted to be set on the Post model directly
-        delete updates.userId;
+        
+        // Save only the likes and likeCount
+        await Post.findByIdAndUpdate(id, {
+          likes: post.likes,
+          likeCount: post.likeCount
+        }, { new: true, runValidators: false });
+
+        // Return the updated post
+        const updatedPost = await Post.findById(id);
+        res.json(updatedPost);
+        return;
       }
 
-      // Apply other updates (if any)
-      Object.assign(post, updates);
-
-      const updatedPost = await post.save(); // Save the updated post
-
-      console.log('Updated post in server:', updatedPost);
-
-      res.json(updatedPost);
+      // Handle other updates (if any)
+      if (Object.keys(updates).length > 0) {
+        const updatedPost = await Post.findByIdAndUpdate(id, updates, { new: true });
+        res.json(updatedPost);
+      } else {
+        res.json(post);
+      }
     } catch (error) {
       console.error('Error updating post:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch('/api/users/:userId/goals', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { goals } = req.body;
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Initialize goals object if it doesn't exist
+      if (!user.goals) {
+        user.goals = {};
+      }
+
+      // Update only the specific goal that was passed in
+      // This will overwrite any existing value for that goal
+      user.goals = {
+        ...user.goals,
+        ...goals
+      };
+      
+      const updatedUser = await user.save();
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user goals:', error);
       res.status(500).json({ error: error.message });
     }
   });

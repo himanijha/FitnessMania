@@ -55,39 +55,14 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  daily_activities: {
-    completed: {
-      type: Boolean,
-      default: false
-    },
-    activity_type: {
-      type: String,
-      enum: ['Running', 'Biking', 'Doing Yoga', 'Swimming', 'Weight Lifting'],
-      default: function() {
-        // Set default based on current day
-        const dailyChallenges = ['Running', 'Biking', 'Doing Yoga', 'Swimming', 'Weight Lifting'];
-        const today = new Date();
-        const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-        return dailyChallenges[dayOfYear % dailyChallenges.length];
-      }
-    },
-    date: {
-      type: String, // Format: YYYY-MM-DD
-      default: function() {
-        return new Date().toISOString().split('T')[0];
-      }
-    },
-    points_earned: {
-      type: Number,
-      default: 0
-    },
-    completed_at: {
-      type: Date,
-      default: null
-    },
-    last_reset: {
-      type: Date,
-      default: Date.now
+  goals: {
+    type: Object,
+    default: {
+      run: 1,
+      bike: 1,
+      yoga: 1,
+      swim: 1,
+      weights: 1,
     }
   }
 });
