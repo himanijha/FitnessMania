@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const Post = require('./models/Post');
@@ -59,11 +60,12 @@ app.use(cors());
 // // Apply authentication middleware
 // app.use(authenticate);
 
-app.get('/', (req, res) => {
-    res.json({ message: 'Hello from the backend' });
-});
+// app.get('/', (req, res) => {
+//     res.json({ message: 'Hello from the backend' });
+// });
 
 const PORT = process.env.PORT || 3000;
+
 
 
 mongoose.connect(process.env.MONGODB_URI)
@@ -72,10 +74,6 @@ mongoose.connect(process.env.MONGODB_URI)
   })
   .catch(err => {
     console.error('MongoDB connection error:', err.message);
-  });
-
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
   });
 
   initializeScheduler();
@@ -633,3 +631,15 @@ app.get('/api/users/leaderboard', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+app.use(express.static(path.join(__dirname, '../build')));
+
+ app.get('*', (req, res) => {
+  console.log('Serving React app for:', req.url);
+  res.sendFile(path.join(__dirname, '../build', 'index.html'));
+});
+
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });

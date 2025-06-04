@@ -84,11 +84,7 @@ const Login = () => {
           </div>
 
           <div className="form-footer">
-            <label className="remember-me">
-              <input type="checkbox" disabled={isLoading} />
-              <span>Remember me</span>
-            </label>
-            <a href="#" className="forgot-password">Forgot password?</a>
+           
           </div>
 
           <button 
