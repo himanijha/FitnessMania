@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const User = require('./models/User');
 const Post = require('./models/Post');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
@@ -11,6 +10,13 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 const http = require('http');
+
+const moment = require('moment-timezone');
+const User = require('./models/User'); 
+// const { resetter } = require('./dailyReset');
+const { initializeScheduler } = require('./models/dailyReset');
+
+
 
 // Configure Cloudinary
 cloudinary.config({
@@ -71,6 +77,8 @@ mongoose.connect(process.env.MONGODB_URI)
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
+
+  initializeScheduler();
 
   app.post('/api/users', async (req, res) => {
     try {
@@ -447,3 +455,181 @@ app.get('/api/users/:userId/posts', async (req, res) => {
       res.status(500).json({ message: 'Error signing in: ' + error.message });
     }
   });
+
+  // Complete daily challenge
+app.post('/api/users/:userId/complete-challenge', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { challenge_type } = req.body;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if challenge is already completed
+    if (user.daily_activities.completed) {
+      return res.status(400).json({ 
+        error: 'Challenge already completed today',
+        points_earned: user.daily_activities.points_earned 
+      });
+    }
+
+    // Verify it's the correct challenge
+    if (user.daily_activities.activity_type !== challenge_type) {
+      return res.status(400).json({ 
+        error: 'Challenge type mismatch',
+        expected: user.daily_activities.activity_type,
+        received: challenge_type
+      });
+    }
+
+    // Points based on challenge type
+    const challengePoints = {
+      'Running': 100,
+      'Biking': 80,
+      'Doing Yoga': 60,
+      'Swimming': 120,
+      'Weight Lifting': 90
+    };
+    
+    const points = challengePoints[challenge_type] || 50;
+    
+    // Use the schema method to complete the challenge
+    await user.completeDailyChallenge(points);
+    
+    res.json({ 
+      success: true, 
+      points_earned: points,
+      total_score: user.dailychallenge_score,
+      message: `Challenge completed! +${points} points` 
+    });
+    
+  } catch (error) {
+    console.error('Error completing challenge:', error);
+    
+    if (error.message === 'Challenge already completed today') {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get current daily challenge info
+app.get('/api/daily-challenge', async (req, res) => {
+  try {
+    const todaysChallenge = User.getTodaysChallenge();
+    const now = moment().tz('America/Los_Angeles');
+    
+    // Get some stats about challenge completion
+    const totalUsers = await User.countDocuments();
+    const completedToday = await User.countDocuments({
+      'daily_activities.completed': true,
+      'daily_activities.date': now.format('YYYY-MM-DD')
+    });
+    
+    res.json({
+      challenge: todaysChallenge,
+      date: now.format('YYYY-MM-DD'),
+      reset_time: '00:00 PST',
+      timezone: 'America/Los_Angeles',
+      stats: {
+        total_users: totalUsers,
+        completed_today: completedToday,
+        completion_rate: totalUsers > 0 ? Math.round((completedToday / totalUsers) * 100) : 0
+      }
+    });
+  } catch (error) {
+    console.error('Error getting daily challenge:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Check if user completed today's challenge
+app.get('/api/users/:userId/challenge-status', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const today = moment().tz('America/Los_Angeles').format('YYYY-MM-DD');
+    
+    const user = await User.findById(userId, 'daily_activities username');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const isToday = user.daily_activities.date === today;
+    const completed = user.daily_activities.completed && isToday;
+    
+    res.json({
+      completed,
+      date: today,
+      activity_type: user.daily_activities.activity_type,
+      points_earned: completed ? user.daily_activities.points_earned : 0,
+      completed_at: completed ? user.daily_activities.completed_at : null,
+      is_current_day: isToday
+    });
+    
+  } catch (error) {
+    console.error('Error checking challenge status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Manual reset endpoint 
+app.post('/api/admin/reset-daily-activities', async (req, res) => {
+  try {
+    const result = await resetter.resetDailyActivities();
+    
+    res.json({ 
+      success: true, 
+      message: `Reset completed for ${result.modifiedCount} users`,
+      modified_count: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Manual reset failed:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Reset specific user's daily activity
+app.post('/api/admin/users/:userId/reset-activity', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await resetter.resetUserActivity(userId);
+    
+    res.json({ 
+      success: true, 
+      message: `Daily activity reset for user ${user.username}`,
+      user: {
+        id: user._id,
+        username: user.username,
+        daily_activities: user.daily_activities
+      }
+    });
+  } catch (error) {
+    console.error('User reset failed:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Get leaderboard with daily challenge info
+app.get('/api/users/leaderboard', async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('username dailychallenge_score daily_activities createdAt')
+      .sort({ dailychallenge_score: -1 })
+      .limit(10);
+    
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});

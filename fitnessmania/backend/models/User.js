@@ -67,4 +67,54 @@ const userSchema = new mongoose.Schema({
   }
 });
 
+userSchema.methods.resetDailyActivity = function(newActivity) {
+  const today = new Date().toISOString().split('T')[0];
+  
+  this.daily_activities = {
+    completed: false,
+    activity_type: newActivity,
+    date: today,
+    points_earned: 0,
+    completed_at: null,
+    last_reset: new Date()
+  };
+  
+  return this.save();
+};
+
+userSchema.methods.completeDailyChallenge = function(points = 100) {
+  if (this.daily_activities.completed) {
+    throw new Error('Challenge already completed today');
+  }
+  
+  this.daily_activities.completed = true;
+  this.daily_activities.completed_at = new Date();
+  this.daily_activities.points_earned = points;
+  this.dailychallenge_score += points;
+  
+  return this.save();
+};
+
+userSchema.statics.getTodaysChallenge = function() {
+  const dailyChallenges = ['Running', 'Biking', 'Doing Yoga', 'Swimming', 'Weight Lifting'];
+  const today = new Date();
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+  return dailyChallenges[dayOfYear % dailyChallenges.length];
+};
+
+userSchema.pre('save', function(next) {
+  if (this.isNew && !this.daily_activities) {
+    const today = new Date().toISOString().split('T')[0];
+    this.daily_activities = {
+      completed: false,
+      activity_type: this.constructor.getTodaysChallenge(),
+      date: today,
+      points_earned: 0,
+      completed_at: null,
+      last_reset: new Date()
+    };
+  }
+  next();
+});
+
 module.exports = mongoose.model('User', userSchema);
