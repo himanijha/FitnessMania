@@ -390,11 +390,11 @@ function UserProfile() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Height</p>
-                    <p className="font-medium">{editedFitnessInfo.height ? `${editedFitnessInfo.height} cm` : user.height ? `${user.height} cm` : 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.height ? `${editedFitnessInfo.height} in` : user.height ? `${user.height} in` : 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Weight</p>
-                    <p className="font-medium">{editedFitnessInfo.weight ? `${editedFitnessInfo.weight} kg` : user.weight ? `${user.weight} kg` : 'Not specified'}</p>
+                    <p className="font-medium">{editedFitnessInfo.weight ? `${editedFitnessInfo.weight} lbs` : user.weight ? `${user.weight} lbs` : 'Not specified'}</p>
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm text-gray-600">Fitness Goal</p>
@@ -673,7 +673,7 @@ function UserProfile() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Height (in)</label>
                 <input
                   type="number"
                   placeholder="Height"
@@ -683,7 +683,7 @@ function UserProfile() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Weight (lbs)</label>
                 <input
                   type="number"
                   placeholder="Weight"
