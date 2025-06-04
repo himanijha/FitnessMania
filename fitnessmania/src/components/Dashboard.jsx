@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 import './../styles/Dashboard.css';
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 function Dashboard() {
     const { userId, loading } = useAuth();
@@ -14,7 +14,29 @@ function Dashboard() {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [postError, setPostError] = useState('');
-    
+    const [numWorkouts, setNumWorkouts] = useState(0);
+    const tagOptions = ['Run', 'Bike', 'Yoga', 'Swim', 'Weight Lifting'];
+    // const [activities, setActivities] = useState({
+    //   run: { goal: 0, current: 0 },
+    //   bike: { goal: 0, current: 0 },
+    //   yoga: { goal: 0, current: 0 },
+    //   swim: { goal: 0, current: 0 },
+    //   weights : { goal: 0, current: 0 },
+    // });
+    // const tagOptions = ['Run', 'Bike', 'Yoga', 'Swim', 'Weight Lifting'];
+    const dailyChallenges = [
+    "Running",
+    "Biking",
+    "Doing Yoga",
+    "Swimming",
+    "Weight Lifting",
+  ];
+
+    const getTodaysChallenge = () => {
+      const today = new Date();
+      const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+      return dailyChallenges[dayOfYear % dailyChallenges.length];
+    };
     
     useEffect(() => {
         // Fetch posts with Authorization header
@@ -38,12 +60,53 @@ function Dashboard() {
         .then(data => {
           setUserData(data);
           console.log("USER DATA: ", data);
-        })
-        .catch(error => {
-          console.error('Error fetching user data:', error);
+              const fetchPosts = async (tag, userId) => {
+      if (userId !== undefined) {
+      try {
+        
+        const response = await fetch(`http://localhost:3000/api/posts/${tag}/${userId}`, {
+          headers: {
+            'Authorization': 'Basic ' + btoa('admin:password')
+          }
         });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const posts = await response.json();
+        console.log(`POST TAGS for ${tag}:`, posts);
+        if (tag === "Weight Lifting") {
+          tag = "weights";
+        }
+        return posts.length
+      } catch (error) {
+        console.error(`Error fetching ${tag} posts:`, error);
+      }
+    }
+    };
 
-    }, [userId, loading]);
+    // Fetch posts for each tag
+    const fetchAllPosts = async () => {
+      let totalWorkouts = 0;
+      for (const tag of tagOptions) {
+        const count = await fetchPosts(tag, data._id);
+        totalWorkouts += count || 0;
+      }
+      setNumWorkouts(totalWorkouts);
+    };
+    
+    fetchAllPosts();
+
+
+    })
+    .catch(error => {
+      console.error('Error fetching user data:', error);
+    });
+
+
+        }, [userId])
+  
 
     useEffect(() => {
     console.log("Posts updated:", posts);
@@ -345,68 +408,36 @@ const handleCreatePost = async () => {
                       Create New Post
                     </button>
                 </div>
+                <button onClick={() => navigate('/personal-activity')}>
                 <div className = "my-progress-container">
                     <div className="progress-info">
-                        <div className="header-text">Streaks and Activity</div>
+                        <div className="header-text" style={{ textAlign: 'center' }}>Streaks and Activity</div>
                         <div className="info-container">
-                            <div className="progress-bar-header">
-                                Steps <div>8000/10000</div>
-                            </div>
-                            <div
-                                style={{
-                                    marginTop: '0.5rem',
-                                    width: '100%',
-                                    background: '#e0e0e0',
-                                    borderRadius: '8px',
-                                    height: '14px',
-                                    overflow: 'hidden',
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width: '60%', // Example: 60% progress
-                                        height: '100%',
-                                        background: '#3C82F6',
-                                        borderRadius: '8px 0 0 8px',
-                                        transition: 'width 0.4s',
-                                    }}
-                                ></div>
-                            </div>
-                            <div className="progress-bar-header">
-                                Workouts <div>5/10</div>
-                            </div>
-                            <div
-                                style={{
-                                    marginTop: '0.5rem',
-                                    width: '100%',
-                                    background: '#e0e0e0',
-                                    borderRadius: '8px',
-                                    height: '14px',
-                                    overflow: 'hidden',
-                                    marginBottom: '1rem',
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width: '60%', // Example: 60% progress
-                                        height: '100%',
-                                        background: '#3C82F6',
-                                        borderRadius: '8px 0 0 8px',
-                                        transition: 'width 0.4s',
-                                    }}
-                                ></div>
-                            </div>
+                            <div style={{
+                                fontSize: '1.1rem',
+                                color: '#4B5563',
+                                fontWeight: '500',
+                                marginBottom: '0.5rem',
+                                textAlign: 'center'
+                            }}>Workouts this week</div>
+                            <div style={{
+                                fontSize: '1.5rem',
+                                color: '#1F2937',
+                                fontWeight: '600',
+                                textAlign: 'center'
+                            }}>{numWorkouts}</div>
                         </div>
                     </div>
                     
                 </div>
+                </button>
                 <div className = "daily-challenge-container" 
                     onClick={() => navigate('/leaderboard')} 
                     style={{ cursor: 'pointer' }}
                 >
-                    <div className = "header-text">Challenges</div>
+                    <div className="header-text" style={{ textAlign: 'center' }}>Challenges</div>
                     <div className = "daily-challenge">
-                        12,000 Steps 
+                        {getTodaysChallenge()}
                     </div>
                 </div>
             </div>
