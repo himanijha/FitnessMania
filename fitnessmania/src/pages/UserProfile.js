@@ -409,7 +409,7 @@ function UserProfile() {
                     setOpenEditProfile(true);
                     setEditedUsername(userData.username || ''); 
                     setEditImageFile(null);
-                    setEditImagePreview(userData.profileImageUrl || '/path-to-user-avatar.jpg');
+                    setEditImagePreview(userData.profileImageUrl || 'https://www.shutterstock.com/image-vector/vector-flat-illustration-grayscale-avatar-600nw-2264922221.jpg');
                     setEditedFitnessInfo({
                       age: userData.age || '',
                       gender: userData.gender || '',
@@ -635,7 +635,7 @@ function UserProfile() {
                   reader.onloadend = () => setEditImagePreview(reader.result);
                   reader.readAsDataURL(file);
                 } else {
-                  setEditImagePreview(userData.profileImageUrl || '/path-to-user-avatar.jpg');
+                  setEditImagePreview(userData.profileImageUrl || 'https://www.shutterstock.com/image-vector/vector-flat-illustration-grayscale-avatar-600nw-2264922221.jpg');
                 }
               }}
             />
