@@ -7,7 +7,8 @@ function Dashboard() {
     const { userId, loading } = useAuth();
     const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
-    const [newComment, setNewComment] = useState();
+    const [newComment, setNewComment] = useState('');
+    const [editingCommentFor, setEditingCommentFor] = useState(null);
     const [userData, setUserData] = useState(null);
     const [openNewPost, setOpenNewPost] = useState(false);
     const [newPost, setNewPost] = useState({ title: '', content: '', duration: '', activityType: '' });
@@ -192,55 +193,54 @@ function Dashboard() {
     }
   };
 
-const handleCommentChange = (e) => {
+const handleCommentChange = (e, postIndex) => {
     setNewComment(e.target.value);
+    setEditingCommentFor(postIndex);
 };
 
 const handleCommentSubmit = async (e, postIndex) => {
-  e.preventDefault(); // Prevent the default form submission behavior
+    e.preventDefault();
 
-  if (newComment.trim() === '') return; // Prevent empty comments
+    if (newComment.trim() === '') return;
 
-  const updatedComment = { username: userData?.username || userData.username, text: newComment };
+    const updatedComment = { username: userData.username, text: newComment };
 
-  // Update state optimistically
-  setPosts((prevPosts) =>
-    prevPosts.map((post, index) =>
-      index === postIndex
-        ? {
-            ...post,
-            comments: [...post.comments, updatedComment], // Append new comment locally
-          }
-        : post
-    )
-  );
+    setPosts((prevPosts) =>
+        prevPosts.map((post, index) =>
+            index === postIndex
+                ? {
+                    ...post,
+                    comments: [...post.comments, updatedComment],
+                }
+                : post
+        )
+    );
 
-  setNewComment(''); // Clear the input field
+    setNewComment('');
+    setEditingCommentFor(null);
 
-  // Perform the API call
-  try {
-    const postId = posts[postIndex]._id; // Assuming `_id` exists in your posts array
-    const response = await fetch(`http://localhost:3000/api/posts/${postId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa('admin:password')
-      },
-      body: JSON.stringify({
-        comments: [...posts[postIndex].comments, updatedComment], // Append new comment for backend
-      }),
-    });
+    try {
+        const postId = posts[postIndex]._id;
+        const response = await fetch(`http://localhost:3000/api/posts/${postId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa('admin:password')
+            },
+            body: JSON.stringify({
+                comments: [...posts[postIndex].comments, updatedComment],
+            }),
+        });
 
-    if (!response.ok) {
-      throw new Error('Failed to update the post');
+        if (!response.ok) {
+            throw new Error('Failed to update the post');
+        }
+
+        const updatedPost = await response.json();
+        console.log('Post updated:', updatedPost);
+    } catch (error) {
+        console.error('Error updating post:', error);
     }
-
-    const updatedPost = await response.json();
-    console.log('Post updated:', updatedPost);
-  } catch (error) {
-    console.error('Error updating post:', error);
-    // Optionally: Handle error (e.g., rollback optimistic update or notify the user)
-  }
 };
 
 const handleImageChange = (e) => {
@@ -642,40 +642,19 @@ const handleCreatePost = async () => {
                                                 <span className="comment-text">{comment.text}</span>
                                             </div>
                                         ))}
-                                        <form onSubmit={(e) => handleCommentSubmit(e, index)} style={{
-                                            marginTop: '8px',
-                                            borderTop: '1px solid #efefef',
-                                            paddingTop: '8px'
-                                        }}> 
+                                        <form onSubmit={(e) => handleCommentSubmit(e, index)} className="mt-4">
                                             <textarea
-                                                value={newComment}
-                                                onChange={handleCommentChange}
+                                                value={editingCommentFor === index ? newComment : ''}
+                                                onChange={(e) => handleCommentChange(e, index)}
                                                 placeholder="Write a comment..."
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '8px',
-                                                    border: '1px solid #efefef',
-                                                    borderRadius: '4px',
-                                                    resize: 'none',
-                                                    fontSize: '14px'
-                                                }}
-                                                rows="2"
+                                                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                rows="3"
                                             />
                                             <button
                                                 type="submit"
-                                                style={{
-                                                    marginTop: '8px',
-                                                    padding: '6px 12px',
-                                                    backgroundColor: '#0095f6',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    fontSize: '14px',
-                                                    fontWeight: '600',
-                                                    cursor: 'pointer'
-                                                }}
+                                                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
                                             >
-                                                Post
+                                                Submit
                                             </button>
                                         </form>
                                     </div>

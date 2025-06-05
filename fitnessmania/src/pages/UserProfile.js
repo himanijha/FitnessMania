@@ -25,6 +25,7 @@ function UserProfile() {
   const [editImagePreview, setEditImagePreview] = useState(null);
   const [newComment, setNewComment] = useState('');
   const [postError, setPostError] = useState('');
+  const [editingCommentFor, setEditingCommentFor] = useState(null);
   const [editedFitnessInfo, setEditedFitnessInfo] = useState({
     age: '',
     gender: '',
@@ -208,16 +209,9 @@ function UserProfile() {
     }
   };
 
-  const handleCommentChange = (e) => {
+  const handleCommentChange = (e, postIndex) => {
     setNewComment(e.target.value);
-  };
-
-  const setCommentState = (index) => {
-    setPosts(prevPosts =>
-      prevPosts.map((post, i) =>
-        i === index ? { ...post, commentstate: !post.commentstate } : post
-      )
-    );
+    setEditingCommentFor(postIndex);
   };
 
   const handleCommentSubmit = async (e, postIndex) => {
@@ -239,6 +233,7 @@ function UserProfile() {
     );
 
     setNewComment('');
+    setEditingCommentFor(null);
 
     try {
       const postId = posts[postIndex]._id;
@@ -246,6 +241,7 @@ function UserProfile() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa('admin:password')
         },
         body: JSON.stringify({
           comments: [...posts[postIndex].comments, updatedComment],
@@ -513,8 +509,8 @@ function UserProfile() {
                         ))}
                         <form onSubmit={(e) => handleCommentSubmit(e, index)} className="mt-4">
                           <textarea
-                            value={newComment}
-                            onChange={handleCommentChange}
+                            value={editingCommentFor === index ? newComment : ''}
+                            onChange={(e) => handleCommentChange(e, index)}
                             placeholder="Write a comment..."
                             className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             rows="3"
