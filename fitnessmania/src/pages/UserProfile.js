@@ -365,7 +365,7 @@ function UserProfile() {
             <div className="text-center">
               <div className="w-32 h-32 rounded-full bg-gray-200 mx-auto mb-4 overflow-hidden">
                 <img
-                  src={user.profileImageUrl || '/path-to-user-avatar.jpg'}
+                  src={user.profileImageUrl || 'https://www.shutterstock.com/image-vector/vector-flat-illustration-grayscale-avatar-600nw-2264922221.jpg'}
                   alt={user.username}
                   className="w-full h-full object-cover"
                 />
