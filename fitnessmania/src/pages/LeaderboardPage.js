@@ -244,6 +244,14 @@ export default function LeaderboardPage() {
   };
 
   const openUserModal = (user) => {
+    // Check if the clicked user is the current user
+    if (user._id === userId) {
+      // Redirect to their profile page instead of opening modal
+      navigate(`/users/${userId}`);
+      return;
+    }
+    
+    // For other users, show the modal as usual
     setSelectedUser(user);
     setShowModal(true);
   };
