@@ -157,6 +157,7 @@ function UserProfile() {
       if (editedFitnessInfo.weight) formData.append('weight', editedFitnessInfo.weight);
       if (editedFitnessInfo.fitness_goal) formData.append('fitness_goal', editedFitnessInfo.fitness_goal);
 
+      console.log('Current userData:', userData);
       console.log('Sending update request with formData:', Object.fromEntries(formData.entries()));
 
       const response = await fetch(`http://localhost:3000/api/users/${userData._id}`, {
@@ -176,17 +177,19 @@ function UserProfile() {
       console.log('Received updated user data:', updatedUser);
       
       // Update the userData state with the new information
-      setUserData(prevData => ({
-        ...prevData,
-        ...updatedUser,
-        age: updatedUser.age || prevData.age,
-        gender: updatedUser.gender || prevData.gender,
-        height: updatedUser.height || prevData.height,
-        weight: updatedUser.weight || prevData.weight,
-        fitness_goal: updatedUser.fitness_goal || prevData.fitness_goal,
-        username: updatedUser.username || prevData.username,
-        profileImageUrl: updatedUser.profileImageUrl || prevData.profileImageUrl
-      }));
+      const newUserData = {
+        ...userData,
+        username: editedUsername || userData.username,
+        profileImageUrl: updatedUser.profileImageUrl || userData.profileImageUrl,
+        age: editedFitnessInfo.age || userData.age,
+        gender: editedFitnessInfo.gender || userData.gender,
+        height: editedFitnessInfo.height || userData.height,
+        weight: editedFitnessInfo.weight || userData.weight,
+        fitness_goal: editedFitnessInfo.fitness_goal || userData.fitness_goal
+      };
+      
+      console.log('Setting new userData:', newUserData);
+      setUserData(newUserData);
 
       setOpenEditProfile(false);
       setEditedUsername('');
